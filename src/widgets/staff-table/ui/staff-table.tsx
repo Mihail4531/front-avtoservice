@@ -22,22 +22,22 @@ export const StaffTable = () => {
         created_at_to: '',
         page: 0
     });
-    
-    const { data, isLoading, refresh } = useStaffList({ 
+
+    const { data, isLoading, refresh } = useStaffList({
         initialLimit: 10,
         filters
     });
-    
+
     const currentUser = useSessionStore((state) => state.user);
-    
+
     // Состояние для модального окна редактирования
     const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    
+
     // Состояние для модального окна смены пароля
     const [changingPasswordStaff, setChangingPasswordStaff] = useState<Staff | null>(null);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-    
+
     // Состояние для модального окна создания
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -64,7 +64,7 @@ export const StaffTable = () => {
         setIsPasswordModalOpen(false);
         setChangingPasswordStaff(null);
     };
-    
+
     const handleCreateSuccess = () => {
         setIsCreateModalOpen(false);
         refresh(); // Обновляем список после создания
@@ -99,7 +99,7 @@ export const StaffTable = () => {
                             />
                         </div>
 
-                        <Button 
+                        <Button
                             className="gap-2 font-bold bg-[var(--red)] hover:bg-red-700 w-full md:w-auto"
                             onClick={() => setIsCreateModalOpen(true)}
                         >
@@ -159,7 +159,7 @@ export const StaffTable = () => {
                         {/* Кнопка сброса фильтров */}
                         {(filters.search || filters.created_at_from || filters.created_at_to || filters.is_active !== undefined) && (
                             <button
-                                onClick={() => setFilters({ search: '', is_active: undefined, role: undefined, created_at_from: '', created_at_to: '', page: 0 })}
+                                onClick={() => setFilters({ search: '', is_active: undefined, created_at_from: '', created_at_to: '', page: 0 })}
                                 className="px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             >
                                 Сбросить
@@ -186,7 +186,7 @@ export const StaffTable = () => {
                             [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
                         ) : data?.items.map((staff) => {
                             const canEdit = canEditStaff(staff);
-                            
+
                             return (
                                 <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors group">
                                     <td className="p-4">
@@ -225,7 +225,7 @@ export const StaffTable = () => {
                                     <td className="p-4">
                                         <div className="flex items-center gap-1">
                                             {canEdit ? (
-                                                <button 
+                                                <button
                                                     onClick={() => handleEditClick(staff)}
                                                     className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all"
                                                     title="Редактировать сотрудника"
@@ -238,7 +238,7 @@ export const StaffTable = () => {
                                                 </div>
                                             )}
                                             {canEdit && (
-                                                <button 
+                                                <button
                                                     onClick={() => handleChangePasswordClick(staff)}
                                                     className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all"
                                                     title="Сменить пароль сотрудника"
@@ -298,13 +298,13 @@ export const StaffTable = () => {
                     }}
                     title="Редактирование сотрудника"
                 >
-                    <EditStaffForm 
-                        staff={editingStaff} 
+                    <EditStaffForm
+                        staff={editingStaff}
                         onSuccess={handleEditSuccess}
                     />
                 </Modal>
             )}
-            
+
             {/* Модальное окно смены пароля сотрудника */}
             {changingPasswordStaff && (
                 <Modal
@@ -315,13 +315,13 @@ export const StaffTable = () => {
                     }}
                     title={`Смена пароля: ${changingPasswordStaff.full_name}`}
                 >
-                    <ChangeStaffPasswordForm 
-                        staffId={changingPasswordStaff.id} 
+                    <ChangeStaffPasswordForm
+                        staffId={changingPasswordStaff.id}
                         onSuccess={handleChangePasswordSuccess}
                     />
                 </Modal>
             )}
-            
+
             {/* Модальное окно создания сотрудника */}
             <Modal
                 isOpen={isCreateModalOpen}
