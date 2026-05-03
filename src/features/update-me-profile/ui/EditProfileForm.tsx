@@ -31,14 +31,14 @@ export const ProfileForm = ({ initialData, onSuccess }: Props) => {
             <div className="space-y-5">
                 {/* Поле Имя */}
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                         Полное имя
                     </label>
                     <div className="relative">
-                        <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             {...register('full_name')}
-                            className={`w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all font-semibold text-slate-900 ${errors.full_name ? 'border-red-500' : 'border-slate-200 focus:border-[var(--red)]'
+                            className={`w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground ${errors.full_name ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
                                 }`}
                         />
                     </div>
@@ -51,14 +51,14 @@ export const ProfileForm = ({ initialData, onSuccess }: Props) => {
 
                 {/* Поле Email */}
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                         Email адрес
                     </label>
                     <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             {...register('email')}
-                            className={`w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all font-semibold text-slate-900 ${errors.email ? 'border-red-500' : 'border-slate-200 focus:border-[var(--red)]'
+                            className={`w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground ${errors.email ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
                                 }`}
                         />
                     </div>

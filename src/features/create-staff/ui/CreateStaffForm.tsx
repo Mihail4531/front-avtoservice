@@ -37,8 +37,8 @@ export const CreateStaffForm = ({ onSuccess }: Props) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Информация о бизнес-ограничениях */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                <p className="text-xs text-slate-500 font-medium">
+            <div className="bg-muted/50 border border-border rounded-xl p-4">
+                <p className="text-xs text-muted-foreground font-medium">
                     <strong>Обратите внимание:</strong> Нельзя создать сотрудника с ролью Super Admin.
                 </p>
             </div>
@@ -46,17 +46,17 @@ export const CreateStaffForm = ({ onSuccess }: Props) => {
             <div className="space-y-5">
                 {/* Поле Имя */}
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                         Полное имя
                     </label>
                     <div className="relative">
-                        <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             {...register('full_name')}
                             placeholder="Иван Иванов"
                             className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all font-semibold text-slate-900",
-                                errors.full_name ? 'border-red-500' : 'border-slate-200 focus:border-[var(--red)]'
+                                "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground",
+                                errors.full_name ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
                             )}
                         />
                     </div>
@@ -69,18 +69,18 @@ export const CreateStaffForm = ({ onSuccess }: Props) => {
 
                 {/* Поле Email */}
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                         Email адрес
                     </label>
                     <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             {...register('email')}
                             placeholder="example@mail.com"
                             type="email"
                             className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all font-semibold text-slate-900",
-                                errors.email ? 'border-red-500' : 'border-slate-200 focus:border-[var(--red)]'
+                                "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground",
+                                errors.email ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
                             )}
                         />
                     </div>
@@ -93,18 +93,18 @@ export const CreateStaffForm = ({ onSuccess }: Props) => {
 
                 {/* Поле Пароль */}
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                         Пароль
                     </label>
                     <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             {...register('password')}
                             placeholder="••••••••"
                             type="password"
                             className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all font-semibold text-slate-900",
-                                errors.password ? 'border-red-500' : 'border-slate-200 focus:border-[var(--red)]'
+                                "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground",
+                                errors.password ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
                             )}
                         />
                     </div>
@@ -117,16 +117,16 @@ export const CreateStaffForm = ({ onSuccess }: Props) => {
 
                 {/* Поле Роль */}
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                         Роль
                     </label>
                     <div className="relative">
-                        <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <select
                             {...register('role')}
                             className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all font-semibold text-slate-900 appearance-none cursor-pointer",
-                                errors.role ? 'border-red-500' : 'border-slate-200 focus:border-[var(--red)]'
+                                "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground appearance-none cursor-pointer",
+                                errors.role ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
                             )}
                         >
                             {availableRoles.map((role) => (
@@ -145,8 +145,8 @@ export const CreateStaffForm = ({ onSuccess }: Props) => {
             </div>
 
             {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                    <p className="text-sm text-red-600 font-medium">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                    <p className="text-sm text-red-600 dark:text-red-400 font-medium">
                         {(error as any)?.response?.data?.message || 'Произошла ошибка при создании'}
                     </p>
                 </div>
