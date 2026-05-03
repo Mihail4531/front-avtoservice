@@ -1,98 +1,105 @@
-// entities/staff/model/types.ts
+// Domain types for Staff entity
 
-export const STAFF_ROLES = ['manager', 'admin', 'super_admin'] as const;
-export type StaffRole = typeof STAFF_ROLES[number];
+export type StaffRole = 'manager' | 'admin' | 'super_admin';
 
 export interface Staff {
-    id: number;
-    full_name: string;
-    email: string;
-    role: StaffRole;
-    is_active: boolean;
-    created_at: string;
+  id: number;
+  full_name: string;
+  email: string;
+  role: StaffRole;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 /**
- * Тип для обновления сотрудника через админку.
- * Соответствует UpdateRequest в Go-сервисе.
- */
-export interface UpdateStaffRequest {
-    full_name: string;
-    email: string;
-    role: StaffRole;
-    is_active: boolean;
-}
-
-export interface StaffListResponse {
-    items: Staff[];
-    total: number;
-    limit: number;
-    offset: number;
-}
-
-export interface StaffFilters {
-    search?: string;
-    role?: StaffRole;
-    is_active?: boolean;
-    page?: number;
-    limit?: number;
-}
-
-/**
- * Расширенный интерфейс сотрудника с методами проверки прав доступа
- * на основе бизнес-логики backend (StaffService.Update)
+ * Staff с методами проверки прав доступа на основе бизнес-логики backend
  */
 export interface StaffWithPermissions extends Staff {
-    /**
-     * Проверка возможности редактирования сотрудника текущим пользователем
-     * Логика из backend:
-     * - if currentID == staffID -> нельзя (используй /me)
-     * - if staff.Role == SuperAdmin -> нельзя
-     * - if currentRole == Admin && staff.Role == Admin -> нельзя
-     */
-    canBeEditedBy(currentUserId: number, currentUserRole: StaffRole): boolean;
-    
-    /**
-     * Проверка возможности повышения до super_admin
-     * Логика из backend: if in.Role == SuperAdmin -> нельзя
-     */
-    canBePromotedToSuperAdmin(): boolean;
-    
-    /**
-     * Проверка возможности смены роли конкретным пользователем
-     */
-    canHaveRoleChangedBy(currentUserRole: StaffRole): boolean;
+  /**
+   * Можно ли редактировать этого сотрудника текущим пользователем
+   * Бизнес-логика из backend:
+   * - Нельзя редактировать себя (currentID == staffID)
+   * - Нельзя редактировать super_admin
+   * - Admin не может редактировать другого admin
+   */
+  canBeEditedBy(currentUserId: number | null, currentUserRole: StaffRole | null): boolean;
+  
+  /**
+   * Можно ли повысить до super_admin
+   * Бизнес-логика: всегда false (нельзя назначить super_admin через этот эндпоинт)
+   */
+  canBePromotedToSuperAdmin(): false;
+  
+  /**
+   * Может ли текущий пользователь изменить роль этого сотрудника
+   * Бизнес-логика: admin не может менять роль другому admin
+   */
+  canHaveRoleChangedBy(currentUserRole: StaffRole | null): boolean;
 }
 
 /**
- * Фабрика для создания сотрудника с проверкой прав доступа
+ * Фабрика для создания StaffWithPermissions
  */
-export const createStaffWithPermissions = (staff: Staff): StaffWithPermissions => ({
+export function createStaffWithPermissions(staff: Staff): StaffWithPermissions {
+  return {
     ...staff,
     
-    canBeEditedBy(currentUserId: number, currentUserRole: StaffRole): boolean {
-        // "if currentID == staffID { return nil, fmt.Errorf("use /me endpoint for self") }"
-        if (this.id === currentUserId) return false;
-        
-        // "if staff.Role == domain.RoleSuperAdmin { return nil, fmt.Errorf("cannot edit superadmin") }"
-        if (this.role === 'super_admin') return false;
-        
-        // "if currentRole == domain.RoleAdmin && staff.Role == domain.RoleAdmin { return nil, fmt.Errorf("admin cannot edit another admin") }"
-        if (currentUserRole === 'admin' && this.role === 'admin') {
-            return false;
-        }
-
-        return true;
-    },
-
-    canBePromotedToSuperAdmin(): boolean {
-        // "if in.Role == domain.RoleSuperAdmin { return nil, fmt.Errorf("cannot promote to superadmin") }"
+    canBeEditedBy(currentUserId, currentUserRole) {
+      // Нельзя редактировать себя
+      if (currentUserId !== null && currentUserId === staff.id) {
         return false;
+      }
+      
+      // Нельзя редактировать super_admin
+      if (staff.role === 'super_admin') {
+        return false;
+      }
+      
+      // Admin не может редактировать другого admin
+      if (currentUserRole === 'admin' && staff.role === 'admin') {
+        return false;
+      }
+      
+      return true;
     },
-
-    canHaveRoleChangedBy(currentUserRole: StaffRole): boolean {
-        if (this.role === 'super_admin') return false;
-        if (currentUserRole === 'admin' && this.role === 'admin') return false;
-        return true;
+    
+    canBePromotedToSuperAdmin() {
+      return false as const;
+    },
+    
+    canHaveRoleChangedBy(currentUserRole) {
+      // Admin не может менять роль другому admin
+      if (currentUserRole === 'admin' && staff.role === 'admin') {
+        return false;
+      }
+      
+      return true;
     }
-});
+  };
+}
+
+/**
+ * Input для создания сотрудника (соответствует CreateStaffRequest в backend)
+ */
+export interface CreateStaffInput {
+  full_name: string;
+  email: string;
+  password: string;
+  role: 'manager' | 'admin'; // super_admin исключен на уровне типа
+}
+
+/**
+ * Input для обновления сотрудника (соответствует UpdateInput в backend)
+ */
+export interface UpdateStaffInput {
+  full_name: string;
+  email: string;
+  role: 'manager' | 'admin'; // super_admin исключен
+  is_active: boolean;
+}
+
+/**
+ * Доступные роли для создания/редактирования (исключая super_admin)
+ */
+export const EDITABLE_ROLES: StaffRole[] = ['manager', 'admin'];

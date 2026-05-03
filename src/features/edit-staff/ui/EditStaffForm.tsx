@@ -1,233 +1,211 @@
-'use client';
+import React, { useState, useEffect } from 'react';
+import { useUpdateStaff } from '../../../entities/staff';
+import type { Staff, UpdateStaffInput, StaffWithPermissions } from '../../../entities/staff';
+import { EDITABLE_ROLES, createStaffWithPermissions } from '../../../entities/staff';
+import { Modal } from '../../../shared/ui/modal';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { editStaffSchema, type EditStaffSchema } from '../model/schema';
-import { useUpdateStaff } from '@/entities/staff/hooks/use-update';
-import { Button } from '@/shared/ui/button';
-import { User as UserIcon, Mail, Shield, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
-import { type Staff, STAFF_ROLES, createStaffWithPermissions } from '@/entities/staff/model/types';
-import { cn } from '@/shared/lib/cn';
-import { useSessionStore } from '@/entities/session/model/store';
-
-interface Props {
-    staff: Staff;
-    onSuccess?: () => void;
+interface EditStaffFormProps {
+  staff: Staff;
+  currentUserId: number | null;
+  currentUserRole: Staff['role'] | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export const EditStaffForm = ({ staff, onSuccess }: Props) => {
-    const { mutate: updateStaff, isPending, error } = useUpdateStaff();
-    const currentUser = useSessionStore((state) => state.user);
+/**
+ * Форма редактирования сотрудника
+ * Бизнес-логика из backend полностью реализована:
+ * - Нельзя редактировать себя (currentID == staffID)
+ * - Нельзя редактировать super_admin
+ * - Admin не может редактировать другого admin
+ * - Нельзя назначить роль super_admin через этот эндпоинт
+ */
+export function EditStaffForm({ 
+  staff, 
+  currentUserId, 
+  currentUserRole, 
+  isOpen, 
+  onClose, 
+  onSuccess 
+}: EditStaffFormProps) {
+  const { isLoading, error, updateStaff, resetError } = useUpdateStaff();
+  
+  const [formData, setFormData] = useState<UpdateStaffInput>({
+    full_name: staff.full_name,
+    email: staff.email,
+    role: staff.role as 'manager' | 'admin',
+    is_active: staff.is_active,
+  });
 
-    // Создаем объект с правами доступа для проверки бизнес-логики
-    const staffWithPermissions = createStaffWithPermissions(staff);
+  // Создаем объект с правами доступа для проверки
+  const staffWithPermissions: StaffWithPermissions = createStaffWithPermissions(staff);
+  
+  // Проверяем права доступа
+  const canEdit = staffWithPermissions.canBeEditedBy(currentUserId, currentUserRole);
+  const canChangeRole = staffWithPermissions.canHaveRoleChangedBy(currentUserRole);
 
-    // Проверяем, может ли текущий пользователь редактировать этого сотрудника
-    const canEdit = currentUser 
-        ? staffWithPermissions.canBeEditedBy(currentUser.id, currentUser.role as any)
-        : false;
+  useEffect(() => {
+    // Сбрасываем форму при открытии
+    if (isOpen) {
+      setFormData({
+        full_name: staff.full_name,
+        email: staff.email,
+        role: staff.role as 'manager' | 'admin',
+        is_active: staff.is_active,
+      });
+      resetError();
+    }
+  }, [isOpen, staff]);
 
-    // Проверяем, можно ли менять роль на super_admin (всегда false по бизнес-логике)
-    const canPromoteToSuperAdmin = staffWithPermissions.canBePromotedToSuperAdmin();
-
-    // Фильтруем доступные роли для выбора
-    const availableRoles = STAFF_ROLES.filter(role => {
-        // Если пытаемся редактировать супер-админа или повышать до супер-админа - блокируем
-        if (role === 'super_admin') return false;
-        return true;
-    });
-
-    const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<EditStaffSchema>({
-        resolver: zodResolver(editStaffSchema),
-        defaultValues: {
-            full_name: staff.full_name,
-            email: staff.email,
-            role: staff.role,
-            is_active: staff.is_active,
-        },
-    });
-
-    const isActive = watch('is_active');
-    const selectedRole = watch('role');
-
-    const onSubmit = (data: EditStaffSchema) => {
-        // Дополнительная проверка на клиенте перед отправкой
-        if (!canEdit) {
-            console.error('У вас нет прав для редактирования этого сотрудника');
-            return;
-        }
-
-        // Блокируем попытку установить роль super_admin
-        if (data.role === 'super_admin') {
-            console.error('Нельзя назначить роль super_admin через этот эндпоинт');
-            return;
-        }
-
-        updateStaff(
-            { staffId: staff.id, data },
-            {
-                onSuccess: () => onSuccess?.(),
-            }
-        );
-    };
-
-    // Если у пользователя нет прав на редактирование - показываем сообщение
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!canEdit) {
-        return (
-            <div className="space-y-6">
-                <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4">
-                    <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                        <h3 className="font-bold text-red-800 mb-1">Нет прав доступа</h3>
-                        <p className="text-sm text-red-600">
-                            Вы не можете редактировать этого сотрудника согласно правилам системы.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        );
+      return;
     }
 
+    resetError();
+    const result = await updateStaff(staff.id, formData);
+    
+    if (result) {
+      onSuccess?.();
+      onClose();
+    }
+  };
+
+  const handleChange = (field: keyof UpdateStaffInput, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Если нет прав на редактирование
+  if (!canEdit) {
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Предупреждение о бизнес-ограничениях */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                <p className="text-xs text-slate-500 font-medium">
-                    <strong>Обратите внимание:</strong> Нельзя назначить роль Super Admin и редактировать суперадминов через эту форму.
-                </p>
-            </div>
-
-            <div className="space-y-5">
-                {/* Поле Имя */}
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
-                        Полное имя
-                    </label>
-                    <div className="relative">
-                        <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            {...register('full_name')}
-                            className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all font-semibold text-slate-900",
-                                errors.full_name ? 'border-red-500' : 'border-slate-200 focus:border-[var(--red)]'
-                            )}
-                        />
-                    </div>
-                    {errors.full_name && (
-                        <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
-                            {errors.full_name.message}
-                        </p>
-                    )}
-                </div>
-
-                {/* Поле Email */}
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
-                        Email адрес
-                    </label>
-                    <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            {...register('email')}
-                            className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all font-semibold text-slate-900",
-                                errors.email ? 'border-red-500' : 'border-slate-200 focus:border-[var(--red)]'
-                            )}
-                        />
-                    </div>
-                    {errors.email && (
-                        <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
-                            {errors.email.message}
-                        </p>
-                    )}
-                </div>
-
-                {/* Поле Роль */}
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
-                        Роль
-                    </label>
-                    <div className="relative">
-                        <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <select
-                            {...register('role')}
-                            disabled={!staffWithPermissions.canHaveRoleChangedBy(currentUser?.role as any)}
-                            className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all font-semibold text-slate-900 appearance-none cursor-pointer",
-                                errors.role ? 'border-red-500' : 'border-slate-200 focus:border-[var(--red)]',
-                                !staffWithPermissions.canHaveRoleChangedBy(currentUser?.role as any) && 'opacity-50 cursor-not-allowed bg-slate-100'
-                            )}
-                        >
-                            {availableRoles.map((role) => (
-                                <option key={role} value={role}>
-                                    {role === 'super_admin' ? 'Super Admin' : role.charAt(0).toUpperCase() + role.slice(1)}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    {!staffWithPermissions.canHaveRoleChangedBy(currentUser?.role as any) && (
-                        <p className="text-slate-400 text-[10px] font-bold uppercase ml-1">
-                            Вы не можете изменить роль этого сотрудника
-                        </p>
-                    )}
-                    {errors.role && (
-                        <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
-                            {errors.role.message}
-                        </p>
-                    )}
-                </div>
-
-                {/* Поле Статус (Активен/Заблокирован) */}
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
-                        Статус аккаунта
-                    </label>
-                    <div className="flex gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setValue('is_active', true)}
-                            className={cn(
-                                "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold transition-all",
-                                isActive === true
-                                    ? "bg-green-50 border-green-500 text-green-700"
-                                    : "bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300"
-                            )}
-                        >
-                            <CheckCircle2 className="w-4 h-4" />
-                            Активен
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setValue('is_active', false)}
-                            className={cn(
-                                "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-bold transition-all",
-                                isActive === false
-                                    ? "bg-red-50 border-red-500 text-red-700"
-                                    : "bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300"
-                            )}
-                        >
-                            <XCircle className="w-4 h-4" />
-                            Заблокирован
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                    <p className="text-sm text-red-600 font-medium">
-                        {(error as any)?.response?.data?.message || 'Произошла ошибка при сохранении'}
-                    </p>
-                </div>
-            )}
-
-            <Button
-                type="submit"
-                disabled={isPending}
-                className="w-full bg-[var(--red)] hover:bg-red-600 text-white font-bold py-6 rounded-xl shadow-lg shadow-red-100 transition-all active:scale-[0.98]"
+      <Modal 
+        isOpen={isOpen} 
+        onClose={onClose}
+        title="Редактирование сотрудника"
+      >
+        <div className="p-4">
+          <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded mb-4">
+            Нет прав доступа для редактирования этого сотрудника
+          </div>
+          <ul className="text-sm text-gray-600 space-y-2 mb-4">
+            <li>• Нельзя редактировать самого себя</li>
+            <li>• Нельзя редактировать Super Admin</li>
+            <li>• Admin не может редактировать другого Admin</li>
+          </ul>
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
             >
-                {isPending ? 'Сохранение...' : 'Сохранить изменения'}
-            </Button>
-        </form>
+              Закрыть
+            </button>
+          </div>
+        </div>
+      </Modal>
     );
-};
+  }
+
+  return (
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose}
+      title={`Редактирование: ${staff.full_name}`}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            ФИО *
+          </label>
+          <input
+            type="text"
+            required
+            minLength={4}
+            maxLength={100}
+            value={formData.full_name}
+            onChange={(e) => handleChange('full_name', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Email *
+          </label>
+          <input
+            type="email"
+            required
+            maxLength={255}
+            value={formData.email}
+            onChange={(e) => handleChange('email', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Роль *
+          </label>
+          <select
+            value={formData.role}
+            onChange={(e) => handleChange('role', e.target.value as 'manager' | 'admin')}
+            disabled={!canChangeRole}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${!canChangeRole ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+          >
+            {EDITABLE_ROLES.map((role) => (
+              <option key={role} value={role}>
+                {role === 'manager' ? 'Менеджер' : 'Администратор'}
+              </option>
+            ))}
+          </select>
+          {!canChangeRole && (
+            <p className="mt-1 text-xs text-orange-600">
+              Вы не можете изменить роль этого сотрудника
+            </p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">
+            Нельзя назначить роль Super Admin через этот интерфейс
+          </p>
+        </div>
+
+        <div>
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={formData.is_active}
+              onChange={(e) => handleChange('is_active', e.target.checked)}
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium text-gray-700">Активен</span>
+          </label>
+        </div>
+
+        <div className="flex justify-end space-x-3 pt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+            disabled={isLoading}
+          >
+            Отмена
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-400"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Сохранение...' : 'Сохранить'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

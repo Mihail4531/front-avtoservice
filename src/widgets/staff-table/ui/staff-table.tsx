@@ -1,226 +1,156 @@
-'use client';
+import React, { useState } from 'react';
+import type { Staff } from '../../../entities/staff';
+import { createStaffWithPermissions } from '../../../entities/staff';
+import { EditStaffForm } from '../../../features/edit-staff';
 
-import { useStaffList } from '@/features/staff-list/model/use-staff-list';
-import { Search, UserPlus, MoreVertical, ShieldCheck, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
-import { Button } from '@/shared/ui/button';
-import { Input } from '@/shared/ui/input';
-import { cn } from '@/shared/lib/cn';
-import { useState } from 'react';
-import { Modal } from '@/shared/ui/modal';
-import { EditStaffForm } from '@/features/edit-staff/ui/EditStaffForm';
-import { type Staff, createStaffWithPermissions } from '@/entities/staff/model/types';
-import { useSessionStore } from '@/entities/session/model/store';
+interface StaffTableProps {
+  staffList: Staff[];
+  currentUserId: number | null;
+  currentUserRole: Staff['role'] | null;
+  onRefresh?: () => void;
+}
 
-export const StaffTable = () => {
-    // Используем лимит 10 по умолчанию
-    const { data, isLoading, filters, setFilters } = useStaffList(10);
-    const currentUser = useSessionStore((state) => state.user);
-    
-    // Состояние для модального окна редактирования
-    const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+/**
+ * Таблица сотрудников с кнопкой редактирования
+ * Бизнес-логика отображения кнопки редактирования:
+ * - Кнопка показывается только если у пользователя есть права на редактирование
+ * - Если прав нет - показывается "—"
+ */
+export function StaffTable({ 
+  staffList, 
+  currentUserId, 
+  currentUserRole,
+  onRefresh 
+}: StaffTableProps) {
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-    // Расчет общего количества страниц на основе данных из Go
-    const totalPages = data ? Math.ceil(data.total / 10) : 0;
+  const handleEditClick = (staff: Staff) => {
+    setEditingStaff(staff);
+    setIsEditModalOpen(true);
+  };
 
-    const handleEditClick = (staff: Staff) => {
-        setEditingStaff(staff);
-        setIsModalOpen(true);
-    };
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingStaff(null);
+  };
 
-    const handleEditSuccess = () => {
-        setIsModalOpen(false);
-        setEditingStaff(null);
-    };
+  const handleEditSuccess = () => {
+    onRefresh?.();
+    handleCloseEditModal();
+  };
 
-    // Проверка возможности редактирования сотрудника
-    const canEditStaff = (staff: Staff): boolean => {
-        if (!currentUser) return false;
-        const staffWithPermissions = createStaffWithPermissions(staff);
-        return staffWithPermissions.canBeEditedBy(currentUser.id, currentUser.role as any);
-    };
+  const getRoleBadgeColor = (role: Staff['role']) => {
+    switch (role) {
+      case 'super_admin':
+        return 'bg-purple-100 text-purple-800';
+      case 'admin':
+        return 'bg-red-100 text-red-800';
+      case 'manager':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
-    return (
-        <div className="space-y-6">
-            {/* Панель управления: Поиск + Фильтры статуса + Добавление */}
-            <div className="flex flex-col gap-4 bg-white p-4 rounded-xl border border-border shadow-sm">
-                <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-                    {/* Тот самый инпут из image_974c1f.png */}
-                    <div className="relative w-full md:w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            placeholder="Поиск сотрудников..."
-                            className="pl-10"
-                            value={filters.search}
-                            onChange={(e) => setFilters(f => ({ ...f, search: e.target.value, page: 0 }))}
-                        />
-                    </div>
+  const getRoleLabel = (role: Staff['role']) => {
+    switch (role) {
+      case 'super_admin':
+        return 'Super Admin';
+      case 'admin':
+        return 'Администратор';
+      case 'manager':
+        return 'Менеджер';
+      default:
+        return role;
+    }
+  };
 
-                    <div className="flex items-center gap-4 w-full md:w-auto">
-                        {/* Фильтрация по активности (вместо чекбоксов сделаем аккуратные табы) */}
-                        <div className="flex bg-slate-50 p-1 rounded-lg border border-border">
-                            {[
-                                { label: 'Все', value: undefined },
-                                { label: 'Активные', value: true },
-                                { label: 'Заблокированные', value: false },
-                            ].map((tab) => (
-                                <button
-                                    key={tab.label}
-                                    onClick={() => setFilters(f => ({ ...f, is_active: tab.value, page: 0 }))}
-                                    className={cn(
-                                        "px-3 py-1.5 text-xs font-bold rounded-md transition-all",
-                                        filters.is_active === tab.value
-                                            ? "bg-white text-slate-900 shadow-sm"
-                                            : "text-slate-400 hover:text-slate-600"
-                                    )}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
+  return (
+    <>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                ФИО
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Роль
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Статус
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Действия
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {staffList.map((staff) => {
+              const staffWithPermissions = createStaffWithPermissions(staff);
+              const canEdit = staffWithPermissions.canBeEditedBy(currentUserId, currentUserRole);
 
-                        <Button className="gap-2 font-bold bg-[var(--red)] hover:bg-red-700 ml-auto md:ml-0">
-                            <UserPlus className="w-4 h-4" />
-                            Добавить
-                        </Button>
-                    </div>
-                </div>
-            </div>
+              return (
+                <tr key={staff.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{staff.full_name}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{staff.email}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(staff.role)}`}>
+                      {getRoleLabel(staff.role)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      staff.is_active 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {staff.is_active ? 'Активен' : 'Неактивен'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    {canEdit ? (
+                      <button
+                        onClick={() => handleEditClick(staff)}
+                        className="text-blue-600 hover:text-blue-900 transition-colors"
+                        title="Редактировать"
+                      >
+                        <svg className="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        <span className="ml-1">Изменить</span>
+                      </button>
+                    ) : (
+                      <span className="text-gray-300" title="Нет прав для редактирования">
+                        —
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-50/50 border-b border-border">
-                        <tr>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Сотрудник</th>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Роль</th>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Дата регистрации</th>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Статус</th>
-                            <th className="p-4 w-10"></th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border text-sm">
-                        {isLoading ? (
-                            [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
-                        ) : data?.items.map((staff) => {
-                            const canEdit = canEditStaff(staff);
-                            
-                            return (
-                                <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors group">
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 uppercase">
-                                                {staff.full_name[0]}
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-slate-900">{staff.full_name}</p>
-                                                <p className="text-xs text-slate-500">{staff.email}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-1.5">
-                                            <ShieldCheck className={cn(
-                                                "w-4 h-4",
-                                                staff.role === 'admin' ? "text-blue-500" : "text-slate-400"
-                                            )} />
-                                            <span className="font-medium text-slate-700 capitalize">{staff.role}</span>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 text-slate-500 font-medium">
-                                        {new Date(staff.created_at).toLocaleDateString('ru-RU')}
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={cn(
-                                            "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border",
-                                            staff.is_active
-                                                ? "bg-green-50 text-green-600 border-green-100"
-                                                : "bg-slate-50 text-slate-400 border-slate-100"
-                                        )}>
-                                            {staff.is_active ? 'Активен' : 'Заблокирован'}
-                                        </span>
-                                    </td>
-                                    <td className="p-4">
-                                        {canEdit ? (
-                                            <button 
-                                                onClick={() => handleEditClick(staff)}
-                                                className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all"
-                                                title="Редактировать сотрудника"
-                                            >
-                                                <Pencil className="w-4 h-4 text-slate-400 hover:text-[var(--red)]" />
-                                            </button>
-                                        ) : (
-                                            <div className="p-2" title="Нет прав для редактирования">
-                                                <span className="text-xs text-slate-300">—</span>
-                                            </div>
-                                        )}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-
-                {/* Footer с пагинацией (Лимит и Оффсет) */}
-                <div className="flex items-center justify-between p-4 border-t border-border bg-slate-50/30">
-                    <div className="text-xs font-bold text-slate-400 uppercase">
-                        Всего: {data?.total || 0}
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <span className="text-xs text-slate-500 font-medium">
-                            Страница {(filters.page || 0) + 1} из {totalPages || 1}
-                        </span>
-                        <div className="flex gap-1">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={filters.page === 0}
-                                onClick={() => setFilters(f => ({ ...f, page: (f.page || 0) - 1 }))}
-                                className="h-8 w-8 p-0"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={(filters.page || 0) + 1 >= totalPages}
-                                onClick={() => setFilters(f => ({ ...f, page: (f.page || 0) + 1 }))}
-                                className="h-8 w-8 p-0"
-                            >
-                                <ChevronRight className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Модальное окно редактирования сотрудника */}
-            {editingStaff && (
-                <Modal
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        setEditingStaff(null);
-                    }}
-                    title="Редактирование сотрудника"
-                >
-                    <EditStaffForm 
-                        staff={editingStaff} 
-                        onSuccess={handleEditSuccess}
-                    />
-                </Modal>
-            )}
-        </div>
-    );
-};
-
-const SkeletonRow = () => (
-    <tr className="animate-pulse">
-        <td className="p-4"><div className="h-10 w-40 bg-slate-100 rounded-lg" /></td>
-        <td className="p-4"><div className="h-6 w-20 bg-slate-100 rounded-lg" /></td>
-        <td className="p-4"><div className="h-6 w-24 bg-slate-100 rounded-lg" /></td>
-        <td className="p-4"><div className="h-6 w-16 bg-slate-100 rounded-full" /></td>
-        <td className="p-4"><div className="h-8 w-8 bg-slate-100 rounded-lg" /></td>
-    </tr>
-);
+      {editingStaff && (
+        <EditStaffForm
+          staff={editingStaff}
+          currentUserId={currentUserId}
+          currentUserRole={currentUserRole}
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+    </>
+  );
+}

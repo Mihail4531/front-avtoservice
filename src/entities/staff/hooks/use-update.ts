@@ -1,37 +1,41 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateMeProfile, updateStaff } from '../api/api';
-import { useSessionStore } from '@/entities/session/model/store';
-import { type UpdateStaffRequest } from '@/entities/staff/model/types';
+import { useState, useCallback } from 'react';
+import { staffApi } from '../api';
+import type { UpdateStaffInput, Staff } from '../../model';
 
-export const useUpdateMe = () => {
-    const queryClient = useQueryClient();
-    const initAuth = useSessionStore((state) => state.initAuth); 
+interface UseUpdateStaffResult {
+  isLoading: boolean;
+  error: string | null;
+  updateStaff: (id: number, data: UpdateStaffInput) => Promise<Staff | null>;
+  resetError: () => void;
+}
 
-    return useMutation({
-        mutationFn: updateMeProfile,
-        onSuccess: async () => {
-            queryClient.invalidateQueries({ queryKey: ['me'] });
-            await initAuth();
-        },
-        onError: (error: any) => {
-            const message = error.response?.data?.message || 'Не удалось обновить профиль';
-            console.error(message);
-        }
-    });
-};
+/**
+ * Хук для обновления сотрудника
+ * Используется в features/edit-staff
+ */
+export function useUpdateStaff(): UseUpdateStaffResult {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export const useUpdateStaff = () => {
-    const queryClient = useQueryClient();
+  const updateStaff = useCallback(async (id: number, data: UpdateStaffInput): Promise<Staff | null> => {
+    setIsLoading(true);
+    setError(null);
 
-    return useMutation({
-        mutationFn: ({ staffId, data }: { staffId: number; data: UpdateStaffRequest }) => 
-            updateStaff(staffId, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['staffs'] });
-        },
-        onError: (error: any) => {
-            const message = error.response?.data?.message || 'Не удалось обновить сотрудника';
-            console.error(message);
-        }
-    });
-};
+    try {
+      const staff = await staffApi.update(id, data);
+      return staff;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Ошибка при обновлении сотрудника';
+      setError(errorMessage);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const resetError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  return { isLoading, error, updateStaff, resetError };
+}
