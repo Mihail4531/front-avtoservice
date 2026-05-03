@@ -21,14 +21,14 @@ export const ProfilePage = () => {
     return (
         <div className="p-8 max-w-5xl mx-auto space-y-8">
             {/* Header Card */}
-            <div className="bg-white rounded-2xl border border-border p-8 shadow-sm flex items-center justify-between">
+            <div className="bg-background rounded-2xl border border-border p-8 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-6">
                     <div className="h-20 w-20 rounded-full bg-[var(--red)] flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-red-100">
                         {user.full_name.split(' ').map(n => n[0]).join('')}
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{user.full_name}</h1>
-                        <p className="text-slate-400 text-sm font-medium">{user.email}</p>
+                        <h1 className="text-2xl font-bold text-foreground">{user.full_name}</h1>
+                        <p className="text-muted-foreground text-sm font-medium">{user.email}</p>
                         <div className="flex gap-2 mt-2">
                             <span className="px-2.5 py-0.5 rounded-full bg-red-50 text-[var(--red)] text-[10px] font-bold uppercase border border-red-100">{user.role}</span>
                             <span className="px-2.5 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold uppercase border border-green-100">Активен</span>
@@ -38,7 +38,7 @@ export const ProfilePage = () => {
 
                 <Button
                     variant="outline"
-                    className="gap-2 font-bold hover:bg-slate-50 transition-colors"
+                    className="gap-2 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                     onClick={() => setIsModalOpen(true)}
                 >
                     <Edit2 className="w-4 h-4" /> Редактировать
@@ -56,7 +56,7 @@ export const ProfilePage = () => {
                         onClick={() => setActiveTab(tab.id as any)}
                         className={cn(
                             "pb-4 text-sm font-bold transition-all relative",
-                            activeTab === tab.id ? "text-[var(--red)]" : "text-slate-400 hover:text-slate-600"
+                            activeTab === tab.id ? "text-[var(--red)]" : "text-muted-foreground hover:text-foreground"
                         )}
                     >
                         {tab.label}
@@ -68,8 +68,8 @@ export const ProfilePage = () => {
             {/* Content Section */}
             <div className="min-h-[400px]">
                 {activeTab === 'personal' ? (
-                    <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-                        <div className="p-6 border-b border-border bg-slate-50/50 font-bold text-slate-900">
+                    <div className="bg-background rounded-2xl border border-border shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+                        <div className="p-6 border-b border-border bg-slate-50/50 dark:bg-slate-800/50 font-bold text-foreground">
                             <span>Контактная информация</span>
                         </div>
 
@@ -106,12 +106,12 @@ export const ProfilePage = () => {
 
 const DataRow = ({ label, value, icon: Icon }: { label: string; value: string; icon: any }) => (
     <div className="flex items-start gap-4 group">
-        <div className="mt-1 p-2 bg-slate-50 rounded-lg group-hover:bg-red-50 transition-colors">
+        <div className="mt-1 p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
             <Icon className="w-4 h-4 text-slate-400 group-hover:text-[var(--red)]" />
         </div>
         <div className="space-y-0.5">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{label}</span>
-            <p className="text-base font-semibold text-slate-900">{value || '—'}</p>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">{label}</span>
+            <p className="text-base font-semibold text-foreground">{value || '—'}</p>
         </div>
     </div>
 );

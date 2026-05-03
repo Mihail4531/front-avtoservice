@@ -1,11 +1,11 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-    LayoutGrid, ClipboardList, Users, Car, UserCog,
-    DollarSign, CalendarDays, Warehouse, Settings, ChevronRight
+    LayoutGrid, ClipboardList, Car, UserCog,
+    DollarSign, CalendarDays, Warehouse, Settings, ChevronRight, Moon, Sun
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { useSessionStore } from '@/entities/session/model/store';
+import { useThemeStore } from '@/entities/theme';
 import { LogoutButton } from '@/features/auth/logout/ui/LogoutButton';
 
 const menuItems = [
@@ -29,16 +29,17 @@ const menuItems = [
 
 export const Sidebar = () => {
     const { user } = useSessionStore();
+    const { theme, toggleTheme } = useThemeStore();
 
     return (
-        <aside className="w-72 h-screen border-r border-border bg-white flex flex-col">
+        <aside className="w-72 h-screen border-r border-border bg-background flex flex-col">
             {/* Логотип */}
             <div className="p-6 flex items-center gap-3">
                 <div className="w-10 h-10 bg-[var(--red)] rounded-xl flex items-center justify-center shadow-lg shadow-red-200">
                     <Car className="text-white w-6 h-6" />
                 </div>
                 <div>
-                    <h1 className="font-bold text-lg leading-none">АвтоСервис</h1>
+                    <h1 className="font-bold text-lg leading-none text-foreground">АвтоСервис</h1>
                     <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">УПРАВЛЕНИЕ</span>
                 </div>
             </div>
@@ -60,7 +61,7 @@ export const Sidebar = () => {
                                         "flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group",
                                         isActive
                                             ? "bg-red-50 text-[var(--red)]"
-                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                            : "text-foreground hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
                                     )}
                                 >
                                     <div className="flex items-center gap-3">
@@ -81,21 +82,39 @@ export const Sidebar = () => {
 
             {/* Футер сайдбара */}
             <div className="p-4 border-t border-border space-y-2">
+                {/* Переключатель темы */}
+                <button
+                    onClick={toggleTheme}
+                    className="flex items-center gap-3 px-3 py-2 text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors w-full"
+                >
+                    {theme === 'dark' ? (
+                        <>
+                            <Sun className="w-5 h-5" />
+                            <span className="text-sm font-semibold">Светлая тема</span>
+                        </>
+                    ) : (
+                        <>
+                            <Moon className="w-5 h-5" />
+                            <span className="text-sm font-semibold">Темная тема</span>
+                        </>
+                    )}
+                </button>
+
                 <NavLink
                     to="/dashboard/settings"
-                    className="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                    className="flex items-center gap-3 px-3 py-2 text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
                     <Settings className="w-5 h-5" />
                     <span className="text-sm font-semibold">Настройки</span>
                 </NavLink>
 
-                <NavLink to="/dashboard/profile" className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl transition-colors group">
+                <NavLink to="/dashboard/profile" className="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors group">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[var(--red)] flex items-center justify-center text-white font-bold text-xs">
                             {user?.full_name?.split(' ').map(n => n[0]).join('') || 'АД'}
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-sm font-bold text-slate-900 leading-none truncate w-32">
+                            <span className="text-sm font-bold text-foreground leading-none truncate w-32">
                                 {user?.full_name || 'Загрузка...'}
                             </span>
                             <span className="text-[11px] text-muted-foreground capitalize mt-1">
