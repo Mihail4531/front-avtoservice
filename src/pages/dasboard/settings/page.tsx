@@ -70,38 +70,6 @@ export const SettingsPage = () => {
                             );
                         })}
                     </div>
-
-                    {/* Preview Card */}
-                    <div className="mt-8 p-6 rounded-xl border border-border bg-card">
-                        <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4">Предпросмотр</p>
-                        <div className={cn(
-                            "rounded-lg p-6 border transition-colors",
-                            theme === 'dark' 
-                                ? "bg-slate-800 border-slate-700" 
-                                : "bg-white border-slate-200",
-                        )}>
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className={cn(
-                                    "w-12 h-12 rounded-full flex items-center justify-center",
-                                    theme === 'dark' ? "bg-red-600" : "bg-[var(--red)]"
-                                )}>
-                                    <span className="text-white font-bold text-lg">АС</span>
-                                </div>
-                                <div>
-                                    <div className={cn("font-bold", theme === 'dark' ? "text-white" : "text-foreground")}>
-                                        АвтоСервис
-                                    </div>
-                                    <div className={cn("text-xs", theme === 'dark' ? "text-slate-400" : "text-muted-foreground")}>
-                                        Панель управления
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className={cn("h-2 rounded", theme === 'dark' ? "bg-slate-700" : "bg-slate-100")}></div>
-                                <div className={cn("h-2 rounded w-2/3", theme === 'dark' ? "bg-slate-700" : "bg-slate-100")}></div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
