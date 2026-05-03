@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateMeProfile } from '../api/api';
+import { updateMeProfile, updateStaff } from '../api/api';
 import { useSessionStore } from '@/entities/session/model/store';
+import { type UpdateStaffRequest } from '@/entities/staff/model/types';
 
 export const useUpdateMe = () => {
     const queryClient = useQueryClient();
@@ -14,6 +15,22 @@ export const useUpdateMe = () => {
         },
         onError: (error: any) => {
             const message = error.response?.data?.message || 'Не удалось обновить профиль';
+            console.error(message);
+        }
+    });
+};
+
+export const useUpdateStaff = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ staffId, data }: { staffId: number; data: UpdateStaffRequest }) => 
+            updateStaff(staffId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['staffs'] });
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.message || 'Не удалось обновить сотрудника';
             console.error(message);
         }
     });

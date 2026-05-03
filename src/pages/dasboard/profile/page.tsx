@@ -5,13 +5,13 @@ import { useSessionStore } from '@/entities/session/model/store';
 import { SecurityTab } from '@/features/change-me-password/ui/ChangeMePasword';
 import { ProfileForm } from '@/features/update-me-profile/ui/EditProfileForm';
 import { Button } from '@/shared/ui/button';
+import { Modal } from '@/shared/ui/modal';
 import { cn } from '@/shared/lib/cn';
-import { Edit2, Mail, User as UserIcon, Shield, Calendar, X } from 'lucide-react';
+import { Edit2, Mail, User as UserIcon, Shield, Calendar } from 'lucide-react';
 
 export const ProfilePage = () => {
     const { user } = useSessionStore();
     const [activeTab, setActiveTab] = useState<'personal' | 'security'>('personal');
-    // Оставляем только стейт для модалки
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     if (!user) return null;
@@ -19,7 +19,7 @@ export const ProfilePage = () => {
     const [firstName, lastName] = user.full_name.split(' ');
 
     return (
-        <div className="p-8 max-w-5xl mx-auto space-y-8 relative">
+        <div className="p-8 max-w-5xl mx-auto space-y-8">
             {/* Header Card */}
             <div className="bg-white rounded-2xl border border-border p-8 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-6">
@@ -39,7 +39,7 @@ export const ProfilePage = () => {
                 <Button
                     variant="outline"
                     className="gap-2 font-bold hover:bg-slate-50 transition-colors"
-                    onClick={() => setIsModalOpen(true)} // Открываем модалку
+                    onClick={() => setIsModalOpen(true)}
                 >
                     <Edit2 className="w-4 h-4" /> Редактировать
                 </Button>
@@ -89,25 +89,17 @@ export const ProfilePage = () => {
                 )}
             </div>
 
-            {/* --- МОДАЛЬНОЕ ОКНО --- */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-border flex justify-between items-center bg-slate-50/50">
-                            <h2 className="font-bold text-slate-900 text-lg">Редактирование профиля</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-8">
-                            <ProfileForm
-                                initialData={{ full_name: user.full_name, email: user.email }}
-                                onSuccess={() => setIsModalOpen(false)}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Модальное окно редактирования профиля */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Редактирование профиля"
+            >
+                <ProfileForm
+                    initialData={{ full_name: user.full_name, email: user.email }}
+                    onSuccess={() => setIsModalOpen(false)}
+                />
+            </Modal>
         </div>
     );
 };
