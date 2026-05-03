@@ -32,8 +32,67 @@ export interface StaffListResponse {
 
 export interface StaffFilters {
     search?: string;
-    role?: StaffRole;      // ← добавьте, если админ фильтрует по роли
+    role?: StaffRole;
     is_active?: boolean;
     page?: number;
     limit?: number;
 }
+
+/**
+ * Расширенный интерфейс сотрудника с методами проверки прав доступа
+ * на основе бизнес-логики backend (StaffService.Update)
+ */
+export interface StaffWithPermissions extends Staff {
+    /**
+     * Проверка возможности редактирования сотрудника текущим пользователем
+     * Логика из backend:
+     * - if currentID == staffID -> нельзя (используй /me)
+     * - if staff.Role == SuperAdmin -> нельзя
+     * - if currentRole == Admin && staff.Role == Admin -> нельзя
+     */
+    canBeEditedBy(currentUserId: number, currentUserRole: StaffRole): boolean;
+    
+    /**
+     * Проверка возможности повышения до super_admin
+     * Логика из backend: if in.Role == SuperAdmin -> нельзя
+     */
+    canBePromotedToSuperAdmin(): boolean;
+    
+    /**
+     * Проверка возможности смены роли конкретным пользователем
+     */
+    canHaveRoleChangedBy(currentUserRole: StaffRole): boolean;
+}
+
+/**
+ * Фабрика для создания сотрудника с проверкой прав доступа
+ */
+export const createStaffWithPermissions = (staff: Staff): StaffWithPermissions => ({
+    ...staff,
+    
+    canBeEditedBy(currentUserId: number, currentUserRole: StaffRole): boolean {
+        // "if currentID == staffID { return nil, fmt.Errorf("use /me endpoint for self") }"
+        if (this.id === currentUserId) return false;
+        
+        // "if staff.Role == domain.RoleSuperAdmin { return nil, fmt.Errorf("cannot edit superadmin") }"
+        if (this.role === 'super_admin') return false;
+        
+        // "if currentRole == domain.RoleAdmin && staff.Role == domain.RoleAdmin { return nil, fmt.Errorf("admin cannot edit another admin") }"
+        if (currentUserRole === 'admin' && this.role === 'admin') {
+            return false;
+        }
+
+        return true;
+    },
+
+    canBePromotedToSuperAdmin(): boolean {
+        // "if in.Role == domain.RoleSuperAdmin { return nil, fmt.Errorf("cannot promote to superadmin") }"
+        return false;
+    },
+
+    canHaveRoleChangedBy(currentUserRole: StaffRole): boolean {
+        if (this.role === 'super_admin') return false;
+        if (currentUserRole === 'admin' && this.role === 'admin') return false;
+        return true;
+    }
+});
