@@ -1,2 +1,2 @@
 export { useCreateStaff } from './use-create';
-export { useUpdateStaff } from './use-update';
+export { useUpdateStaff, useUpdateMe } from './use-update';

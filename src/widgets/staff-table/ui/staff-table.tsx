@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { Staff } from '../../../entities/staff';
 import { createStaffWithPermissions } from '../../../entities/staff';
 import { EditStaffForm } from '../../../features/edit-staff';

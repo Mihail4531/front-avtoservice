@@ -103,3 +103,27 @@ export interface UpdateStaffInput {
  * Доступные роли для создания/редактирования (исключая super_admin)
  */
 export const EDITABLE_ROLES: StaffRole[] = ['manager', 'admin'];
+
+/**
+ * Массив ролей для использования в zod enum
+ */
+export const STAFF_ROLES = ['manager', 'admin', 'super_admin'] as const;
+
+/**
+ * Ответ API со списком сотрудников
+ */
+export interface StaffListResponse {
+  items: Staff[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/**
+ * Фильтры для списка сотрудников
+ */
+export interface StaffFilters {
+  search?: string;
+  is_active?: boolean;
+  page?: number;
+}

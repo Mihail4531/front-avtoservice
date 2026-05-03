@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { StaffTable } from '../../../widgets/staff-table';
-import { CreateStaffForm } from '../../../features/create-staff';
-import { staffApi } from '../../../entities/staff';
-import type { Staff } from '../../../entities/staff';
+import { StaffTable } from '@/widgets/staff-table';
+import { CreateStaffForm } from '@/features/create-staff';
+import { staffApi } from '@/entities/staff';
+import type { Staff } from '@/entities/staff';
+import { useState, useEffect } from 'react';
 
 // Моковые данные для текущего пользователя (в реальном приложении брать из session store)
 const CURRENT_USER: { id: number; role: Staff['role'] } = {
@@ -21,7 +21,7 @@ const CURRENT_USER: { id: number; role: Staff['role'] } = {
  * - Нельзя создать super_admin
  * - Нельзя редактировать себя, super_admin, admin другому admin
  */
-export function StaffPage() {
+export default function StaffPage() {
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

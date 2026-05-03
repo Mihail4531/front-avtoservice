@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { staffApi } from '../api';
-import type { CreateStaffInput, Staff } from '../../model';
+import type { CreateStaffInput, Staff } from '../model';
 
 interface UseCreateStaffResult {
   isLoading: boolean;

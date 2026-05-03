@@ -1,7 +1,6 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-    LayoutGrid, ClipboardList, Users, Car, UserCog,
+    LayoutGrid, ClipboardList, Car, UserCog,
     DollarSign, CalendarDays, Warehouse, Settings, ChevronRight
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';

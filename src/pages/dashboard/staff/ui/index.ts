@@ -1,1 +1,1 @@
-export { StaffPage } from './staff-page';
+export { default as StaffPage } from './staff-page';

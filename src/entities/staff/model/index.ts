@@ -4,6 +4,9 @@ export {
   type StaffWithPermissions, 
   type CreateStaffInput, 
   type UpdateStaffInput,
+  type StaffListResponse,
+  type StaffFilters,
   createStaffWithPermissions,
-  EDITABLE_ROLES 
+  EDITABLE_ROLES,
+  STAFF_ROLES
 } from './types';

@@ -3,17 +3,15 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ShieldCheck, KeyRound, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { KeyRound, Loader2 } from 'lucide-react';
 import { api } from '@/shared/api/api';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
-import { cn } from '@/shared/lib/cn';
 import { changePasswordSchema, type ChangePasswordFormValues } from '../model/schema';
 
 export const SecurityTab = () => {
     const [isLoading, setIsLoading] = useState(false);
-    const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<ChangePasswordFormValues>({
         resolver: zodResolver(changePasswordSchema)
@@ -21,21 +19,15 @@ export const SecurityTab = () => {
 
     const onSubmit = async (values: ChangePasswordFormValues) => {
         setIsLoading(true);
-        setStatus(null);
         try {
-            // Поля соответствуют твоей структуре ChangePasswordRequest на Go
             await api.post('/dashboard/me/password', {
                 old_password: values.old_password,
                 password: values.password
             });
 
-            setStatus({ type: 'success', msg: 'Пароль успешно изменен.' });
             reset();
         } catch (error: any) {
-            setStatus({
-                type: 'error',
-                msg: error.response?.data?.message || 'Ошибка: проверьте текущий пароль'
-            });
+            console.error('Failed to change password:', error);
         } finally {
             setIsLoading(false);
         }

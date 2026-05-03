@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { updateProfileSchema, type UpdateProfileSchema } from '../model/schema';
-import { useUpdateMe } from '@/entities/staff/hooks/use-update';
+import { useUpdateMe } from '@/entities/staff';
 import { Button } from '@/shared/ui/button';
 import { User as UserIcon, Mail } from 'lucide-react';
 
