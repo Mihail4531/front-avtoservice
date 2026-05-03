@@ -1,7 +1,7 @@
 'use client';
 
 import { useStaffList } from '@/features/staff-list/model/use-staff-list';
-import { Search, UserPlus, MoreVertical, ShieldCheck, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
+import { Search, UserPlus, ShieldCheck, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/lib/cn';
@@ -14,7 +14,17 @@ import { useSessionStore } from '@/entities/session/model/store';
 
 export const StaffTable = () => {
     // Используем лимит 10 по умолчанию
-    const { data, isLoading, filters, setFilters } = useStaffList(10);
+    const [filters, setFilters] = useState({
+        search: '',
+        is_active: undefined as boolean | undefined,
+        page: 0
+    });
+    
+    const { data, isLoading, refresh } = useStaffList({ 
+        initialLimit: 10,
+        filters
+    });
+    
     const currentUser = useSessionStore((state) => state.user);
     
     // Состояние для модального окна редактирования
@@ -35,10 +45,12 @@ export const StaffTable = () => {
     const handleEditSuccess = () => {
         setIsEditModalOpen(false);
         setEditingStaff(null);
+        refresh(); // Обновляем список после редактирования
     };
     
     const handleCreateSuccess = () => {
         setIsCreateModalOpen(false);
+        refresh(); // Обновляем список после создания
     };
 
     // Проверка возможности редактирования сотрудника
@@ -46,6 +58,10 @@ export const StaffTable = () => {
         if (!currentUser) return false;
         const staffWithPermissions = createStaffWithPermissions(staff);
         return staffWithPermissions.canBeEditedBy(currentUser.id, currentUser.role as any);
+    };
+
+    const handleFilterChange = (newFilters: Partial<typeof filters>) => {
+        setFilters(prev => ({ ...prev, ...newFilters, page: newFilters.page !== undefined ? newFilters.page : prev.page }));
     };
 
     return (
@@ -60,7 +76,7 @@ export const StaffTable = () => {
                             placeholder="Поиск сотрудников..."
                             className="pl-10"
                             value={filters.search}
-                            onChange={(e) => setFilters(f => ({ ...f, search: e.target.value, page: 0 }))}
+                            onChange={(e) => handleFilterChange({ search: e.target.value, page: 0 })}
                         />
                     </div>
 
@@ -74,7 +90,7 @@ export const StaffTable = () => {
                             ].map((tab) => (
                                 <button
                                     key={tab.label}
-                                    onClick={() => setFilters(f => ({ ...f, is_active: tab.value, page: 0 }))}
+                                    onClick={() => handleFilterChange({ is_active: tab.value, page: 0 })}
                                     className={cn(
                                         "px-3 py-1.5 text-xs font-bold rounded-md transition-all",
                                         filters.is_active === tab.value
@@ -187,7 +203,7 @@ export const StaffTable = () => {
                                 variant="outline"
                                 size="sm"
                                 disabled={filters.page === 0}
-                                onClick={() => setFilters(f => ({ ...f, page: (f.page || 0) - 1 }))}
+                                onClick={() => handleFilterChange({ page: (filters.page || 0) - 1 })}
                                 className="h-8 w-8 p-0"
                             >
                                 <ChevronLeft className="w-4 h-4" />
@@ -196,7 +212,7 @@ export const StaffTable = () => {
                                 variant="outline"
                                 size="sm"
                                 disabled={(filters.page || 0) + 1 >= totalPages}
-                                onClick={() => setFilters(f => ({ ...f, page: (f.page || 0) + 1 }))}
+                                onClick={() => handleFilterChange({ page: (filters.page || 0) + 1 })}
                                 className="h-8 w-8 p-0"
                             >
                                 <ChevronRight className="w-4 h-4" />
