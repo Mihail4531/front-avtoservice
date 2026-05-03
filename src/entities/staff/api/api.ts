@@ -38,9 +38,17 @@ export const staffApi = {
   /**
    * Получение списка сотрудников
    * GET /dashboard/admin/staffs
+   * Примечание: обрабатываем как ответ массивом, так и объектом { items: [] }
    */
   getAll: async (): Promise<Staff[]> => {
-    const response = await api.get<Staff[]>('/dashboard/admin/staffs');
+    const response = await api.get<Staff[] | { items: Staff[] }>('/dashboard/admin/staffs');
+    
+    // Если пришел объект с items, извлекаем массив
+    if ('items' in response.data) {
+      return response.data.items;
+    }
+    
+    // Если пришел сразу массив
     return response.data;
   },
 
