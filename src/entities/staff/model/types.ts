@@ -45,11 +45,6 @@ export function createStaffWithPermissions(staff: Staff): StaffWithPermissions {
     ...staff,
     
     canBeEditedBy(currentUserId, currentUserRole) {
-      // Нельзя редактировать себя
-      if (currentUserId !== null && currentUserId === staff.id) {
-        return false;
-      }
-      
       // Нельзя редактировать super_admin
       if (staff.role === 'super_admin') {
         return false;
