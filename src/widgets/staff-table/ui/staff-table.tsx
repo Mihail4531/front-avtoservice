@@ -8,11 +8,13 @@ import { cn } from '@/shared/lib/cn';
 import { useState } from 'react';
 import { Modal } from '@/shared/ui/modal';
 import { EditStaffForm } from '@/features/edit-staff/ui/EditStaffForm';
-import { type Staff } from '@/entities/staff/model/types';
+import { type Staff, createStaffWithPermissions } from '@/entities/staff/model/types';
+import { useSessionStore } from '@/entities/session/model/store';
 
 export const StaffTable = () => {
     // Используем лимит 10 по умолчанию
     const { data, isLoading, filters, setFilters } = useStaffList(10);
+    const currentUser = useSessionStore((state) => state.user);
     
     // Состояние для модального окна редактирования
     const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
@@ -29,6 +31,13 @@ export const StaffTable = () => {
     const handleEditSuccess = () => {
         setIsModalOpen(false);
         setEditingStaff(null);
+    };
+
+    // Проверка возможности редактирования сотрудника
+    const canEditStaff = (staff: Staff): boolean => {
+        if (!currentUser) return false;
+        const staffWithPermissions = createStaffWithPermissions(staff);
+        return staffWithPermissions.canBeEditedBy(currentUser.id, currentUser.role as any);
     };
 
     return (
@@ -93,51 +102,62 @@ export const StaffTable = () => {
                     <tbody className="divide-y divide-border text-sm">
                         {isLoading ? (
                             [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
-                        ) : data?.items.map((staff) => (
-                            <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors group">
-                                <td className="p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 uppercase">
-                                            {staff.full_name[0]}
+                        ) : data?.items.map((staff) => {
+                            const canEdit = canEditStaff(staff);
+                            
+                            return (
+                                <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors group">
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 uppercase">
+                                                {staff.full_name[0]}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-slate-900">{staff.full_name}</p>
+                                                <p className="text-xs text-slate-500">{staff.email}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-slate-900">{staff.full_name}</p>
-                                            <p className="text-xs text-slate-500">{staff.email}</p>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-1.5">
+                                            <ShieldCheck className={cn(
+                                                "w-4 h-4",
+                                                staff.role === 'admin' ? "text-blue-500" : "text-slate-400"
+                                            )} />
+                                            <span className="font-medium text-slate-700 capitalize">{staff.role}</span>
                                         </div>
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex items-center gap-1.5">
-                                        <ShieldCheck className={cn(
-                                            "w-4 h-4",
-                                            staff.role === 'admin' ? "text-blue-500" : "text-slate-400"
-                                        )} />
-                                        <span className="font-medium text-slate-700 capitalize">{staff.role}</span>
-                                    </div>
-                                </td>
-                                <td className="p-4 text-slate-500 font-medium">
-                                    {new Date(staff.created_at).toLocaleDateString('ru-RU')}
-                                </td>
-                                <td className="p-4">
-                                    <span className={cn(
-                                        "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border",
-                                        staff.is_active
-                                            ? "bg-green-50 text-green-600 border-green-100"
-                                            : "bg-slate-50 text-slate-400 border-slate-100"
-                                    )}>
-                                        {staff.is_active ? 'Активен' : 'Заблокирован'}
-                                    </span>
-                                </td>
-                                <td className="p-4">
-                                    <button 
-                                        onClick={() => handleEditClick(staff)}
-                                        className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all"
-                                    >
-                                        <Pencil className="w-4 h-4 text-slate-400 hover:text-[var(--red)]" />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className="p-4 text-slate-500 font-medium">
+                                        {new Date(staff.created_at).toLocaleDateString('ru-RU')}
+                                    </td>
+                                    <td className="p-4">
+                                        <span className={cn(
+                                            "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border",
+                                            staff.is_active
+                                                ? "bg-green-50 text-green-600 border-green-100"
+                                                : "bg-slate-50 text-slate-400 border-slate-100"
+                                        )}>
+                                            {staff.is_active ? 'Активен' : 'Заблокирован'}
+                                        </span>
+                                    </td>
+                                    <td className="p-4">
+                                        {canEdit ? (
+                                            <button 
+                                                onClick={() => handleEditClick(staff)}
+                                                className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all"
+                                                title="Редактировать сотрудника"
+                                            >
+                                                <Pencil className="w-4 h-4 text-slate-400 hover:text-[var(--red)]" />
+                                            </button>
+                                        ) : (
+                                            <div className="p-2" title="Нет прав для редактирования">
+                                                <span className="text-xs text-slate-300">—</span>
+                                            </div>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
 
