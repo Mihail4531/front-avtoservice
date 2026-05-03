@@ -33,8 +33,16 @@ export const useStaffList = (initialLimit = 10) => {
             };
 
             const response = await api.get<StaffListAPIResponse>('/dashboard/admin/staffs', { params });
-            setData(response.data.items);
-            setTotal(response.data.total);
+            
+            // Проверка на случай если пришел HTML вместо JSON
+            if (!response.data || typeof response.data !== 'object') {
+                setData([]);
+                setTotal(0);
+                return;
+            }
+            
+            setData(response.data.items || []);
+            setTotal(response.data.total || 0);
         } catch (error) {
             console.error("Failed to fetch staff", error);
             setData([]);

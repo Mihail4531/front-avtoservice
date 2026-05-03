@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { CreateStaffInput, Staff } from '../model';
+import { staffApi } from '../api';
 
 interface UseCreateStaffResult {
   isLoading: boolean;
@@ -21,21 +22,7 @@ export function useCreateStaff(): UseCreateStaffResult {
     setError(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/dashboard/admin/staffs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Ошибка при создании сотрудника');
-      }
-
-      const staff = await response.json();
+      const staff = await staffApi.create(data);
       return staff;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Ошибка при создании сотрудника';

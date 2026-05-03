@@ -6,4 +6,5 @@ export const authApi = {
     logout: () => api.post('/auth/logout'),
     refresh: () => api.post('/auth/refresh'),
     getMe: () => api.get('/dashboard/me'),
+    updateMe: (data: { full_name: string; email: string }) => api.put('/dashboard/me', data),
 };

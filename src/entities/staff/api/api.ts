@@ -43,13 +43,22 @@ export const staffApi = {
   getAll: async (): Promise<Staff[]> => {
     const response = await api.get<Staff[] | { items: Staff[] }>('/dashboard/admin/staffs');
     
+    // Проверка, что данные существуют
+    if (!response.data) {
+      return [];
+    }
+    
     // Если пришел объект с items, извлекаем массив
-    if ('items' in response.data) {
-      return response.data.items;
+    if (typeof response.data === 'object' && 'items' in response.data) {
+      return response.data.items || [];
     }
     
     // Если пришел сразу массив
-    return response.data;
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    return [];
   },
 
   /**
