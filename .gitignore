@@ -1,14 +1,1 @@
-```
-# Environment variables
-.env
-
-# Build artifacts
-dist/
-
-# Logs and temporary files
-*.log
-*.tmp
-
-# Editors
-.vscode/
-```
+(src/entities/staff/api/api.ts)

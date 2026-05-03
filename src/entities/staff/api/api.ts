@@ -38,27 +38,18 @@ export const staffApi = {
   /**
    * Получение списка сотрудников
    * GET /dashboard/admin/staffs
-   * Примечание: обрабатываем как ответ массивом, так и объектом { items: [] }
+   * Примечание: backend возвращает { items: [], total, limit, offset }
    */
   getAll: async (): Promise<Staff[]> => {
-    const response = await api.get<Staff[] | { items: Staff[] }>('/dashboard/admin/staffs');
+    const response = await api.get('/dashboard/admin/staffs');
     
-    // Проверка, что данные существуют
-    if (!response.data) {
+    // Проверка, что данные существуют и это объект
+    if (!response.data || typeof response.data !== 'object' || Array.isArray(response.data)) {
       return [];
     }
     
-    // Если пришел объект с items, извлекаем массив
-    if (typeof response.data === 'object' && 'items' in response.data) {
-      return response.data.items || [];
-    }
-    
-    // Если пришел сразу массив
-    if (Array.isArray(response.data)) {
-      return response.data;
-    }
-    
-    return [];
+    // Извлекаем массив из поля items
+    return response.data.items || [];
   },
 
   /**
