@@ -1,17 +1,35 @@
 'use client';
 
 import { useStaffList } from '@/features/staff-list/model/use-staff-list';
-import { Search, UserPlus, MoreVertical, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, UserPlus, MoreVertical, ShieldCheck, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/lib/cn';
+import { useState } from 'react';
+import { Modal } from '@/shared/ui/modal';
+import { EditStaffForm } from '@/features/edit-staff/ui/EditStaffForm';
+import { type Staff } from '@/entities/staff/model/types';
 
 export const StaffTable = () => {
     // Используем лимит 10 по умолчанию
     const { data, isLoading, filters, setFilters } = useStaffList(10);
+    
+    // Состояние для модального окна редактирования
+    const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Расчет общего количества страниц на основе данных из Go
     const totalPages = data ? Math.ceil(data.total / 10) : 0;
+
+    const handleEditClick = (staff: Staff) => {
+        setEditingStaff(staff);
+        setIsModalOpen(true);
+    };
+
+    const handleEditSuccess = () => {
+        setIsModalOpen(false);
+        setEditingStaff(null);
+    };
 
     return (
         <div className="space-y-6">
@@ -111,8 +129,11 @@ export const StaffTable = () => {
                                     </span>
                                 </td>
                                 <td className="p-4">
-                                    <button className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all">
-                                        <MoreVertical className="w-4 h-4 text-slate-400" />
+                                    <button 
+                                        onClick={() => handleEditClick(staff)}
+                                        className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all"
+                                    >
+                                        <Pencil className="w-4 h-4 text-slate-400 hover:text-[var(--red)]" />
                                     </button>
                                 </td>
                             </tr>
@@ -153,6 +174,23 @@ export const StaffTable = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Модальное окно редактирования сотрудника */}
+            {editingStaff && (
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingStaff(null);
+                    }}
+                    title="Редактирование сотрудника"
+                >
+                    <EditStaffForm 
+                        staff={editingStaff} 
+                        onSuccess={handleEditSuccess}
+                    />
+                </Modal>
+            )}
         </div>
     );
 };

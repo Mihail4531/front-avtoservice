@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/shared/api/api';
-import { type Staff, type StaffListResponse, type StaffFilters } from '@/entities/staff/model/types';
+import { type StaffListResponse, type StaffFilters } from '@/entities/staff/model/types';
 
 export const useStaffList = (initialLimit = 10) => {
     const [data, setData] = useState<StaffListResponse | null>(null);

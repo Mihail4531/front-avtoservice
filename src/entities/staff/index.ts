@@ -7,4 +7,5 @@ export type {
     StaffFilters 
 } from './model/types';
 export { STAFF_ROLES } from './model/types';
-export { useUpdateMe } from './hooks/use-update';
+export { useUpdateMe, useUpdateStaff } from './hooks/use-update';
+export { updateStaff } from './api/api';

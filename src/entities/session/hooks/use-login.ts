@@ -2,7 +2,6 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/auth-api';
 import { useSessionStore } from '../model/store';
-import type { LoginFormValues } from '@/features/auth/login/model/schema';
 
 export const useLogin = () => {
     const navigate = useNavigate();
