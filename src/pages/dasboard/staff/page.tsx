@@ -1,7 +1,7 @@
 import { StaffTable } from '@/widgets/staff-table';
 import { useSession } from '@/entities/session';
 import { staffApi } from '@/entities/staff';
-import type { Staff } from '@/entities/staff';
+import type { Staff, StaffRole } from '@/entities/staff';
 import { useState, useEffect } from 'react';
 
 export default function StaffPage() {
@@ -43,7 +43,7 @@ export default function StaffPage() {
             <StaffTable
                 staffList={staffList}
                 currentUserId={user?.id || null}
-                currentUserRole={user?.role || null}
+                currentUserRole={(user?.role as StaffRole) || null}
                 onRefresh={loadStaffList}
             />
         </main>

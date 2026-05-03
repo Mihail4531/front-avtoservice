@@ -1,13 +1,13 @@
 import { StaffTable } from '@/widgets/staff-table';
 import { CreateStaffForm } from '@/features/create-staff';
 import { staffApi } from '@/entities/staff';
-import type { Staff } from '@/entities/staff';
+import type { Staff, StaffRole } from '@/entities/staff';
 import { useState, useEffect } from 'react';
 
 // Моковые данные для текущего пользователя (в реальном приложении брать из session store)
-const CURRENT_USER: { id: number; role: Staff['role'] } = {
+const CURRENT_USER: { id: number; role: StaffRole } = {
   id: 1,
-  role: 'admin', // или 'super_admin' для полного доступа
+  role: 'admin' as StaffRole, // или 'super_admin' для полного доступа
 };
 
 /**

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useUpdateStaff } from '../../../entities/staff';
-import type { Staff, UpdateStaffInput, StaffWithPermissions } from '../../../entities/staff';
+import type { Staff, UpdateStaffInput, StaffWithPermissions, StaffRole } from '../../../entities/staff';
 import { EDITABLE_ROLES, createStaffWithPermissions } from '../../../entities/staff';
 import { Modal } from '../../../shared/ui/modal';
 
 interface EditStaffFormProps {
   staff: Staff;
   currentUserId: number | null;
-  currentUserRole: Staff['role'] | null;
+  currentUserRole: StaffRole | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
