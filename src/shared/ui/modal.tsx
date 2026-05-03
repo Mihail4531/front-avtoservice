@@ -16,15 +16,15 @@ export const Modal = ({ isOpen, onClose, title, children, className }: ModalProp
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
       <div 
         className={cn(
-          "bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200",
+          "bg-card rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200",
           className
         )}
       >
-        <div className="p-6 border-b border-border flex justify-between items-center bg-slate-50/50">
-          <h2 className="font-bold text-slate-900 text-lg">{title}</h2>
+        <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
+          <h2 className="font-bold text-foreground text-lg">{title}</h2>
           <button 
             onClick={onClose} 
-            className="text-slate-400 hover:text-slate-600 p-1 transition-colors"
+            className="text-muted-foreground hover:text-foreground p-1 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

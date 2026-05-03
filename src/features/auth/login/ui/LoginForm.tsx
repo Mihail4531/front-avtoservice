@@ -33,7 +33,7 @@ export const LoginForm = () => {
     return (
         <form
             onSubmit={handleSubmit(onSubmit)}
-            className="space-y-5 w-full max-w-sm p-6 bg-white rounded-xl shadow-sm border border-border"
+            className="space-y-5 w-full max-w-sm p-6 bg-card rounded-xl shadow-sm border border-border"
         >
             <div className="space-y-1.5">
                 <Label htmlFor="email">Email</Label>

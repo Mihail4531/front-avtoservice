@@ -84,13 +84,13 @@ export const StaffTable = () => {
     return (
         <div className="space-y-6">
             {/* Панель управления: Поиск + Фильтры статуса + Добавление */}
-            <div className="flex flex-col gap-4 bg-white p-4 rounded-xl border border-border shadow-sm">
+            <div className="flex flex-col gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
                 <div className="flex flex-col gap-4">
                     {/* Верхняя строка: Поиск + Кнопка Добавить */}
                     <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
                         {/* Тот самый инпут из image_974c1f.png */}
                         <div className="relative w-full md:w-96">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                             <Input
                                 placeholder="Поиск сотрудников..."
                                 className="pl-10"
@@ -111,7 +111,7 @@ export const StaffTable = () => {
                     {/* Нижняя строка: Фильтры */}
                     <div className="flex flex-wrap items-center gap-4">
                         {/* Фильтрация по активности */}
-                        <div className="flex bg-slate-50 p-1 rounded-lg border border-border">
+                        <div className="flex bg-muted/50 p-1 rounded-lg border border-border">
                             {[
                                 { label: 'Все', value: undefined },
                                 { label: 'Активные', value: true },
@@ -123,8 +123,8 @@ export const StaffTable = () => {
                                     className={cn(
                                         "px-3 py-1.5 text-xs font-bold rounded-md transition-all",
                                         filters.is_active === tab.value
-                                            ? "bg-white text-slate-900 shadow-sm"
-                                            : "text-slate-400 hover:text-slate-600"
+                                            ? "bg-card text-foreground shadow-sm"
+                                            : "text-muted-foreground hover:text-foreground"
                                     )}
                                 >
                                     {tab.label}
@@ -134,24 +134,24 @@ export const StaffTable = () => {
 
                         {/* Фильтр по дате создания - ОТ */}
                         <div className="relative">
-                            <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                            <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                             <input
                                 type="date"
                                 value={filters.created_at_from}
                                 onChange={(e) => handleFilterChange({ created_at_from: e.target.value, page: 0 })}
-                                className="pl-8 pr-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-slate-300 transition-colors"
+                                className="pl-8 pr-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-ring transition-colors"
                                 placeholder="С даты"
                             />
                         </div>
 
                         {/* Фильтр по дате создания - ДО */}
                         <div className="relative">
-                            <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                            <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                             <input
                                 type="date"
                                 value={filters.created_at_to}
                                 onChange={(e) => handleFilterChange({ created_at_to: e.target.value, page: 0 })}
-                                className="pl-8 pr-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-slate-300 transition-colors"
+                                className="pl-8 pr-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-ring transition-colors"
                                 placeholder="По дату"
                             />
                         </div>
@@ -159,8 +159,8 @@ export const StaffTable = () => {
                         {/* Кнопка сброса фильтров */}
                         {(filters.search || filters.created_at_from || filters.created_at_to || filters.is_active !== undefined) && (
                             <button
-                                onClick={() => setFilters({ search: '', is_active: undefined, created_at_from: '', created_at_to: '', page: 0 })}
-                                className="px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                onClick={() => setFilters({ search: '', is_active: undefined, role: undefined, created_at_from: '', created_at_to: '', page: 0 })}
+                                className="px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             >
                                 Сбросить
                             </button>
@@ -170,14 +170,14 @@ export const StaffTable = () => {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                 <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-50/50 border-b border-border">
+                    <thead className="bg-muted/50 border-b border-border">
                         <tr>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Сотрудник</th>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Роль</th>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Дата регистрации</th>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Статус</th>
+                            <th className="p-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Сотрудник</th>
+                            <th className="p-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Роль</th>
+                            <th className="p-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Дата регистрации</th>
+                            <th className="p-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Статус</th>
                             <th className="p-4 w-10"></th>
                         </tr>
                     </thead>
@@ -188,15 +188,15 @@ export const StaffTable = () => {
                             const canEdit = canEditStaff(staff);
 
                             return (
-                                <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors group">
+                                <tr key={staff.id} className="hover:bg-muted/30 transition-colors group">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 uppercase">
+                                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground uppercase">
                                                 {staff.full_name[0]}
                                             </div>
                                             <div>
-                                                <p className="font-bold text-slate-900">{staff.full_name}</p>
-                                                <p className="text-xs text-slate-500">{staff.email}</p>
+                                                <p className="font-bold text-foreground">{staff.full_name}</p>
+                                                <p className="text-xs text-muted-foreground">{staff.email}</p>
                                             </div>
                                         </div>
                                     </td>
@@ -204,20 +204,20 @@ export const StaffTable = () => {
                                         <div className="flex items-center gap-1.5">
                                             <ShieldCheck className={cn(
                                                 "w-4 h-4",
-                                                staff.role === 'admin' ? "text-blue-500" : "text-slate-400"
+                                                staff.role === 'admin' ? "text-blue-500" : "text-muted-foreground"
                                             )} />
-                                            <span className="font-medium text-slate-700 capitalize">{staff.role}</span>
+                                            <span className="font-medium text-foreground capitalize">{staff.role}</span>
                                         </div>
                                     </td>
-                                    <td className="p-4 text-slate-500 font-medium">
+                                    <td className="p-4 text-muted-foreground font-medium">
                                         {new Date(staff.created_at).toLocaleDateString('ru-RU')}
                                     </td>
                                     <td className="p-4">
                                         <span className={cn(
                                             "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border",
                                             staff.is_active
-                                                ? "bg-green-50 text-green-600 border-green-100"
-                                                : "bg-slate-50 text-slate-400 border-slate-100"
+                                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+                                                : "bg-muted text-muted-foreground border-border"
                                         )}>
                                             {staff.is_active ? 'Активен' : 'Заблокирован'}
                                         </span>
@@ -227,23 +227,23 @@ export const StaffTable = () => {
                                             {canEdit ? (
                                                 <button
                                                     onClick={() => handleEditClick(staff)}
-                                                    className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all"
+                                                    className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
                                                     title="Редактировать сотрудника"
                                                 >
-                                                    <Pencil className="w-4 h-4 text-slate-400 hover:text-[var(--red)]" />
+                                                    <Pencil className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
                                                 </button>
                                             ) : (
                                                 <div className="p-2" title="Нет прав для редактирования">
-                                                    <span className="text-xs text-slate-300">—</span>
+                                                    <span className="text-xs text-muted-foreground/30">—</span>
                                                 </div>
                                             )}
                                             {canEdit && (
                                                 <button
                                                     onClick={() => handleChangePasswordClick(staff)}
-                                                    className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all"
+                                                    className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
                                                     title="Сменить пароль сотрудника"
                                                 >
-                                                    <KeyRound className="w-4 h-4 text-slate-400 hover:text-[var(--red)]" />
+                                                    <KeyRound className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
                                                 </button>
                                             )}
                                         </div>
@@ -255,13 +255,13 @@ export const StaffTable = () => {
                 </table>
 
                 {/* Footer с пагинацией (Лимит и Оффсет) */}
-                <div className="flex items-center justify-between p-4 border-t border-border bg-slate-50/30">
-                    <div className="text-xs font-bold text-slate-400 uppercase">
+                <div className="flex items-center justify-between p-4 border-t border-border bg-muted/30">
+                    <div className="text-xs font-bold text-muted-foreground uppercase">
                         Всего: {data?.total || 0}
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <span className="text-xs text-slate-500 font-medium">
+                        <span className="text-xs text-muted-foreground font-medium">
                             Страница {(filters.page || 0) + 1} из {totalPages || 1}
                         </span>
                         <div className="flex gap-1">

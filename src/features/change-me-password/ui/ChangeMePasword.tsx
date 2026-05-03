@@ -42,7 +42,7 @@ export const SecurityTab = () => {
     };
 
     return (
-        <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden animate-in fade-in duration-500">
+        <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden animate-in fade-in duration-500">
             {/* ... Header ... */}
 
             <form
@@ -54,7 +54,7 @@ export const SecurityTab = () => {
 
                 <div className="space-y-4">
                     <div className="space-y-1.5">
-                        <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Текущий пароль</Label>
+                        <Label className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Текущий пароль</Label>
                         <Input
                             {...register('old_password')}
                             type="password"
@@ -65,7 +65,7 @@ export const SecurityTab = () => {
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Новый пароль</Label>
+                        <Label className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Новый пароль</Label>
                         <Input
                             {...register('password')}
                             type="password"
@@ -76,7 +76,7 @@ export const SecurityTab = () => {
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Подтверждение</Label>
+                        <Label className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Подтверждение</Label>
                         <Input
                             {...register('confirm_password')}
                             type="password"
