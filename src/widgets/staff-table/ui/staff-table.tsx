@@ -24,7 +24,7 @@ export const StaffTable = () => {
     });
 
     const { data, isLoading, refresh } = useStaffList({
-        initialLimit: 10,
+        initialLimit: 5,
         filters
     });
 
@@ -42,7 +42,7 @@ export const StaffTable = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Расчет общего количества страниц на основе данных из Go
-    const totalPages = data ? Math.ceil(data.total / 10) : 0;
+    const totalPages = data ? Math.ceil(data.total / 5) : 0;
 
     const handleEditClick = (staff: Staff) => {
         setEditingStaff(staff);
