@@ -17,13 +17,16 @@ interface StaffTableProps {
  * - Если прав нет - показывается "—"
  */
 export function StaffTable({ 
-  staffList, 
+  staffList = [], 
   currentUserId, 
   currentUserRole,
   onRefresh 
 }: StaffTableProps) {
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  // Защита от некорректных данных
+  const safeList = Array.isArray(staffList) ? staffList : [];
 
   const handleEditClick = (staff: Staff) => {
     setEditingStaff(staff);
@@ -90,7 +93,7 @@ export function StaffTable({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {staffList.map((staff) => {
+            {safeList.map((staff) => {
               const staffWithPermissions = createStaffWithPermissions(staff);
               const canEdit = staffWithPermissions.canBeEditedBy(currentUserId, currentUserRole);
 
