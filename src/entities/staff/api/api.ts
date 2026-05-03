@@ -1,6 +1,6 @@
 import { api } from '@/shared/api/api';
 import { type UpdateProfileSchema } from '@/features/update-me-profile/model/schema';
-import { type UpdateStaffRequest } from '@/entities/staff/model/types';
+import { type UpdateStaffRequest, type CreateStaffRequest } from '@/entities/staff/model/types';
 
 export const updateMeProfile = async (data: UpdateProfileSchema) => {
     const response = await api.put('/dashboard/me', data);
@@ -9,5 +9,10 @@ export const updateMeProfile = async (data: UpdateProfileSchema) => {
 
 export const updateStaff = async (staffId: number, data: UpdateStaffRequest) => {
     const response = await api.put(`/dashboard/admin/staffs/${staffId}`, data);
+    return response.data;
+};
+
+export const createStaff = async (data: CreateStaffRequest) => {
+    const response = await api.post('/dashboard/admin/staffs', data);
     return response.data;
 };

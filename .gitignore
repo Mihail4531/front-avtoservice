@@ -1,3 +1,15 @@
-```ts
+```
+# Dependencies
+node_modules/
 
+# Build artifacts
+node_modules/.tmp/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Logs
+*.log
 ```
