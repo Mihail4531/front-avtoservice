@@ -1,16 +1,39 @@
+// entities/staff/model/types.ts
+
+export const STAFF_ROLES = ['manager', 'admin', 'super_admin'] as const;
+export type StaffRole = typeof STAFF_ROLES[number];
+
 export interface Staff {
-  id: number;
-  full_name: string;
-  email: string;
-  role: 'manager' | 'admin' | 'super_admin';
-  is_active: boolean;
-  created_at: string;
+    id: number;
+    full_name: string;
+    email: string;
+    role: StaffRole;
+    is_active: boolean;
+    created_at: string;
 }
-export interface UpdateMeRequest { full_name: string; email: string; }
-export interface ChangePasswordRequest { old_password: string; password: string; }
-export interface CreateStaffRequest { full_name: string; email: string; password: string; role: 'manager' | 'admin'; }
-export interface UpdateStaffRequest { full_name: string; email: string; role: 'manager' | 'admin' | 'super_admin'; is_active: boolean; }
-export interface ChangeStaffPasswordRequest { password: string; }
-export interface ListStaffsParams { limit?: number; offset?: number; is_active?: boolean; created_at_from?: string; created_at_to?: string; search?: string; }
-export interface StaffResponse { id: number; full_name: string; email: string; role: string; is_active: boolean; created_at: string; }
-export interface StaffListResponse { items: StaffResponse[]; total: number; limit: number; offset: number; }
+
+/**
+ * Тип для обновления сотрудника через админку.
+ * Соответствует UpdateRequest в Go-сервисе.
+ */
+export interface UpdateStaffRequest {
+    full_name: string;
+    email: string;
+    role: StaffRole;
+    is_active: boolean;
+}
+
+export interface StaffListResponse {
+    items: Staff[];
+    total: number;
+    limit: number;
+    offset: number;
+}
+
+export interface StaffFilters {
+    search?: string;
+    role?: StaffRole;      // ← добавьте, если админ фильтрует по роли
+    is_active?: boolean;
+    page?: number;
+    limit?: number;
+}

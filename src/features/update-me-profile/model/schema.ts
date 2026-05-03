@@ -1,6 +1,14 @@
 import { z } from 'zod';
-export const updateMeSchema = z.object({
-  full_name: z.string().min(4, 'Минимум 4 символа').max(100, 'Максимум 100 символов'),
-  email: z.string().email('Некорректный email').max(255, 'Максимум 255 символов'),
+
+export const updateProfileSchema = z.object({
+    full_name: z
+        .string()
+        .min(4, 'Имя должно содержать минимум 4 символа')
+        .max(100, 'Имя слишком длинное'),
+    email: z
+        .string()
+        .email('Введите корректный email адрес')
+        .max(255, 'Email слишком длинный'),
 });
-export type UpdateMeFormData = z.infer<typeof updateMeSchema>;
+
+export type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;

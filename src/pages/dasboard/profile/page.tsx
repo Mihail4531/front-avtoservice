@@ -1,0 +1,125 @@
+'use client';
+
+import { useState } from 'react';
+import { useSessionStore } from '@/entities/session/model/store';
+import { SecurityTab } from '@/features/change-me-password/ui/ChangeMePasword';
+import { ProfileForm } from '@/features/update-me-profile/ui/EditProfileForm';
+import { Button } from '@/shared/ui/button';
+import { cn } from '@/shared/lib/cn';
+import { Edit2, Mail, User as UserIcon, Shield, Calendar, X } from 'lucide-react';
+
+export const ProfilePage = () => {
+    const { user } = useSessionStore();
+    const [activeTab, setActiveTab] = useState<'personal' | 'security'>('personal');
+    // Оставляем только стейт для модалки
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    if (!user) return null;
+
+    const [firstName, lastName] = user.full_name.split(' ');
+
+    return (
+        <div className="p-8 max-w-5xl mx-auto space-y-8 relative">
+            {/* Header Card */}
+            <div className="bg-white rounded-2xl border border-border p-8 shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                    <div className="h-20 w-20 rounded-full bg-[var(--red)] flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-red-100">
+                        {user.full_name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">{user.full_name}</h1>
+                        <p className="text-slate-400 text-sm font-medium">{user.email}</p>
+                        <div className="flex gap-2 mt-2">
+                            <span className="px-2.5 py-0.5 rounded-full bg-red-50 text-[var(--red)] text-[10px] font-bold uppercase border border-red-100">{user.role}</span>
+                            <span className="px-2.5 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold uppercase border border-green-100">Активен</span>
+                        </div>
+                    </div>
+                </div>
+
+                <Button
+                    variant="outline"
+                    className="gap-2 font-bold hover:bg-slate-50 transition-colors"
+                    onClick={() => setIsModalOpen(true)} // Открываем модалку
+                >
+                    <Edit2 className="w-4 h-4" /> Редактировать
+                </Button>
+            </div>
+
+            {/* Tabs Navigation */}
+            <div className="flex gap-8 border-b border-border px-4">
+                {[
+                    { id: 'personal', label: 'Личные данные' },
+                    { id: 'security', label: 'Безопасность' }
+                ].map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={cn(
+                            "pb-4 text-sm font-bold transition-all relative",
+                            activeTab === tab.id ? "text-[var(--red)]" : "text-slate-400 hover:text-slate-600"
+                        )}
+                    >
+                        {tab.label}
+                        {activeTab === tab.id && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--red)] rounded-full animate-in fade-in zoom-in-95" />}
+                    </button>
+                ))}
+            </div>
+
+            {/* Content Section */}
+            <div className="min-h-[400px]">
+                {activeTab === 'personal' ? (
+                    <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+                        <div className="p-6 border-b border-border bg-slate-50/50 font-bold text-slate-900">
+                            <span>Контактная информация</span>
+                        </div>
+
+                        <div className="p-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                                <DataRow label="Имя" value={firstName} icon={UserIcon} />
+                                <DataRow label="Фамилия" value={lastName} icon={UserIcon} />
+                                <DataRow label="Email адрес" value={user.email} icon={Mail} />
+                                <DataRow label="Должность" value={user.role} icon={Shield} />
+                                <DataRow label="Дата регистрации" value={new Date(user.created_at).toLocaleDateString('ru-RU')} icon={Calendar} />
+                                <DataRow label="Телефон" value="+7 (910) 123-45-67" icon={Mail} />
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <SecurityTab />
+                )}
+            </div>
+
+            {/* --- МОДАЛЬНОЕ ОКНО --- */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-border flex justify-between items-center bg-slate-50/50">
+                            <h2 className="font-bold text-slate-900 text-lg">Редактирование профиля</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-8">
+                            <ProfileForm
+                                initialData={{ full_name: user.full_name, email: user.email }}
+                                onSuccess={() => setIsModalOpen(false)}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const DataRow = ({ label, value, icon: Icon }: { label: string; value: string; icon: any }) => (
+    <div className="flex items-start gap-4 group">
+        <div className="mt-1 p-2 bg-slate-50 rounded-lg group-hover:bg-red-50 transition-colors">
+            <Icon className="w-4 h-4 text-slate-400 group-hover:text-[var(--red)]" />
+        </div>
+        <div className="space-y-0.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{label}</span>
+            <p className="text-base font-semibold text-slate-900">{value || '—'}</p>
+        </div>
+    </div>
+);

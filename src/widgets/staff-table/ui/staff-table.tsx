@@ -1,0 +1,168 @@
+'use client';
+
+import { useStaffList } from '@/features/staff-list/model/use-staff-list';
+import { Search, UserPlus, MoreVertical, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { cn } from '@/shared/lib/cn';
+
+export const StaffTable = () => {
+    // Используем лимит 10 по умолчанию
+    const { data, isLoading, filters, setFilters } = useStaffList(10);
+
+    // Расчет общего количества страниц на основе данных из Go
+    const totalPages = data ? Math.ceil(data.total / 10) : 0;
+
+    return (
+        <div className="space-y-6">
+            {/* Панель управления: Поиск + Фильтры статуса + Добавление */}
+            <div className="flex flex-col gap-4 bg-white p-4 rounded-xl border border-border shadow-sm">
+                <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+                    {/* Тот самый инпут из image_974c1f.png */}
+                    <div className="relative w-full md:w-96">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input
+                            placeholder="Поиск сотрудников..."
+                            className="pl-10"
+                            value={filters.search}
+                            onChange={(e) => setFilters(f => ({ ...f, search: e.target.value, page: 0 }))}
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-4 w-full md:w-auto">
+                        {/* Фильтрация по активности (вместо чекбоксов сделаем аккуратные табы) */}
+                        <div className="flex bg-slate-50 p-1 rounded-lg border border-border">
+                            {[
+                                { label: 'Все', value: undefined },
+                                { label: 'Активные', value: true },
+                                { label: 'Заблокированные', value: false },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.label}
+                                    onClick={() => setFilters(f => ({ ...f, is_active: tab.value, page: 0 }))}
+                                    className={cn(
+                                        "px-3 py-1.5 text-xs font-bold rounded-md transition-all",
+                                        filters.is_active === tab.value
+                                            ? "bg-white text-slate-900 shadow-sm"
+                                            : "text-slate-400 hover:text-slate-600"
+                                    )}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <Button className="gap-2 font-bold bg-[var(--red)] hover:bg-red-700 ml-auto md:ml-0">
+                            <UserPlus className="w-4 h-4" />
+                            Добавить
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Table */}
+            <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-50/50 border-b border-border">
+                        <tr>
+                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Сотрудник</th>
+                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Роль</th>
+                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Дата регистрации</th>
+                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Статус</th>
+                            <th className="p-4 w-10"></th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border text-sm">
+                        {isLoading ? (
+                            [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
+                        ) : data?.items.map((staff) => (
+                            <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors group">
+                                <td className="p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 uppercase">
+                                            {staff.full_name[0]}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-slate-900">{staff.full_name}</p>
+                                            <p className="text-xs text-slate-500">{staff.email}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex items-center gap-1.5">
+                                        <ShieldCheck className={cn(
+                                            "w-4 h-4",
+                                            staff.role === 'admin' ? "text-blue-500" : "text-slate-400"
+                                        )} />
+                                        <span className="font-medium text-slate-700 capitalize">{staff.role}</span>
+                                    </div>
+                                </td>
+                                <td className="p-4 text-slate-500 font-medium">
+                                    {new Date(staff.created_at).toLocaleDateString('ru-RU')}
+                                </td>
+                                <td className="p-4">
+                                    <span className={cn(
+                                        "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border",
+                                        staff.is_active
+                                            ? "bg-green-50 text-green-600 border-green-100"
+                                            : "bg-slate-50 text-slate-400 border-slate-100"
+                                    )}>
+                                        {staff.is_active ? 'Активен' : 'Заблокирован'}
+                                    </span>
+                                </td>
+                                <td className="p-4">
+                                    <button className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all">
+                                        <MoreVertical className="w-4 h-4 text-slate-400" />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                {/* Footer с пагинацией (Лимит и Оффсет) */}
+                <div className="flex items-center justify-between p-4 border-t border-border bg-slate-50/30">
+                    <div className="text-xs font-bold text-slate-400 uppercase">
+                        Всего: {data?.total || 0}
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <span className="text-xs text-slate-500 font-medium">
+                            Страница {(filters.page || 0) + 1} из {totalPages || 1}
+                        </span>
+                        <div className="flex gap-1">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={filters.page === 0}
+                                onClick={() => setFilters(f => ({ ...f, page: (f.page || 0) - 1 }))}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={(filters.page || 0) + 1 >= totalPages}
+                                onClick={() => setFilters(f => ({ ...f, page: (f.page || 0) + 1 }))}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const SkeletonRow = () => (
+    <tr className="animate-pulse">
+        <td className="p-4"><div className="h-10 w-40 bg-slate-100 rounded-lg" /></td>
+        <td className="p-4"><div className="h-6 w-20 bg-slate-100 rounded-lg" /></td>
+        <td className="p-4"><div className="h-6 w-24 bg-slate-100 rounded-lg" /></td>
+        <td className="p-4"><div className="h-6 w-16 bg-slate-100 rounded-full" /></td>
+        <td className="p-4"><div className="h-8 w-8 bg-slate-100 rounded-lg" /></td>
+    </tr>
+);

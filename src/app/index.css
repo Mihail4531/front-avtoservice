@@ -1,0 +1,13 @@
+@import "tailwindcss";
+@import "tailwindcss";
+
+@theme {
+    --color-border: oklch(0.92 0.004 286);
+    --color-ring: oklch(0.62 0.16 254);
+    --color-background: oklch(1 0 0);
+    --color-foreground: oklch(0.14 0.005 285);
+    --color-muted-foreground: oklch(0.55 0.01 285);
+
+    --red: #e11d48;
+    /* Твой фирменный красный */
+}
