@@ -8,7 +8,7 @@ import { Sidebar } from '@/widgets/sidebar/ui/sidebar';
 import StaffPage from '@/pages/dasboard/staff/page';
 
 export const AppRouter = () => {
-    const { isAuth, isInitialized, initAuth } = useSessionStore();
+    const { isAuth, isInitialized, initAuth, logout } = useSessionStore();
 
     // 2. Создаем клиент один раз, чтобы хуки TanStack Query заработали
     const [queryClient] = useState(() => new QueryClient());
@@ -16,6 +16,18 @@ export const AppRouter = () => {
     useEffect(() => {
         initAuth();
     }, [initAuth]);
+
+    // Обработчик события истечения сессии
+    useEffect(() => {
+        const handleAuthExpired = () => {
+            logout();
+        };
+
+        window.addEventListener('auth:expired', handleAuthExpired);
+        return () => {
+            window.removeEventListener('auth:expired', handleAuthExpired);
+        };
+    }, [logout]);
 
     if (!isInitialized) {
         return (

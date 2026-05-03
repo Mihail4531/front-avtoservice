@@ -45,11 +45,18 @@ export const staffApi = {
     
     // Проверка, что данные существуют и это объект
     if (!response.data || typeof response.data !== 'object' || Array.isArray(response.data)) {
+      console.error('Unexpected response format:', response.data);
       return [];
     }
     
     // Извлекаем массив из поля items
-    return response.data.items || [];
+    const items = response.data.items;
+    if (!Array.isArray(items)) {
+      console.error('items is not an array:', items);
+      return [];
+    }
+    
+    return items;
   },
 
   /**
