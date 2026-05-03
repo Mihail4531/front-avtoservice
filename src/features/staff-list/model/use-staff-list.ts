@@ -10,6 +10,24 @@ interface UseStaffListOptions {
     filters?: Partial<StaffFilters>;
 }
 
+// Helper function to convert YYYY-MM-DD to RFC3339 (start of day UTC)
+const formatDateToRFC3339 = (dateString: string, isEndOfDay: boolean = false): string | undefined => {
+    if (!dateString) return undefined;
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return undefined;
+    
+    if (isEndOfDay) {
+        // Set to end of day (23:59:59) for created_at_to
+        date.setHours(23, 59, 59, 999);
+    } else {
+        // Set to start of day (00:00:00) for created_at_from
+        date.setHours(0, 0, 0, 0);
+    }
+    
+    return date.toISOString();
+};
+
 export const useStaffList = ({ initialLimit = 10, filters }: UseStaffListOptions = {}) => {
     const fetchStaff = async () => {
         const params: Record<string, string | number | boolean | undefined> = {
@@ -20,11 +38,12 @@ export const useStaffList = ({ initialLimit = 10, filters }: UseStaffListOptions
         };
 
         // Добавляем фильтры по дате создания, если они указаны
+        // Преобразуем YYYY-MM-DD в RFC3339 формат
         if (filters?.created_at_from) {
-            params.created_at_from = filters.created_at_from;
+            params.created_at_from = formatDateToRFC3339(filters.created_at_from, false);
         }
         if (filters?.created_at_to) {
-            params.created_at_to = filters.created_at_to;
+            params.created_at_to = formatDateToRFC3339(filters.created_at_to, true);
         }
 
         // Добавляем фильтр по роли, если указан
