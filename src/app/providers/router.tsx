@@ -7,6 +7,7 @@ import { LoginPage } from '@/pages/(auth)/login/page';
 import { ProfilePage } from '@/pages/dasboard/profile/page';
 import { Sidebar } from '@/widgets/sidebar/ui/sidebar';
 import StaffPage from '@/pages/dasboard/staff/page';
+import { SettingsPage } from '@/pages/dasboard/settings/page';
 
 export const AppRouter = () => {
     const { isAuth, isInitialized, initAuth } = useSessionStore();
@@ -52,6 +53,7 @@ export const AppRouter = () => {
                             <Route index element={<div>Общая статистика автосервиса</div>} />
                             <Route path="profile" element={<ProfilePage />} />
                             <Route path="admin/staff" element={<StaffPage />} />
+                            <Route path="settings" element={<SettingsPage />} />
                         </Route>
 
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -1,11 +1,10 @@
 import { NavLink } from 'react-router-dom';
 import {
     LayoutGrid, ClipboardList, Car, UserCog,
-    DollarSign, CalendarDays, Warehouse, Settings, ChevronRight, Moon, Sun
+    DollarSign, CalendarDays, Warehouse, Settings, ChevronRight
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { useSessionStore } from '@/entities/session/model/store';
-import { useThemeStore } from '@/entities/theme';
 import { LogoutButton } from '@/features/auth/logout/ui/LogoutButton';
 
 const menuItems = [
@@ -29,7 +28,6 @@ const menuItems = [
 
 export const Sidebar = () => {
     const { user } = useSessionStore();
-    const { theme, toggleTheme } = useThemeStore();
 
     return (
         <aside className="w-72 h-screen border-r border-border bg-background flex flex-col">
@@ -82,24 +80,6 @@ export const Sidebar = () => {
 
             {/* Футер сайдбара */}
             <div className="p-4 border-t border-border space-y-2">
-                {/* Переключатель темы */}
-                <button
-                    onClick={toggleTheme}
-                    className="flex items-center gap-3 px-3 py-2 text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors w-full"
-                >
-                    {theme === 'dark' ? (
-                        <>
-                            <Sun className="w-5 h-5" />
-                            <span className="text-sm font-semibold">Светлая тема</span>
-                        </>
-                    ) : (
-                        <>
-                            <Moon className="w-5 h-5" />
-                            <span className="text-sm font-semibold">Темная тема</span>
-                        </>
-                    )}
-                </button>
-
                 <NavLink
                     to="/dashboard/settings"
                     className="flex items-center gap-3 px-3 py-2 text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
