@@ -46,17 +46,14 @@ export const useStaffList = ({ initialLimit = 10, filters }: UseStaffListOptions
             params.created_at_to = formatDateToRFC3339(filters.created_at_to, true);
         }
 
-        // Добавляем фильтр по роли, если указан
-        if (filters?.role) {
-            params.role = filters.role;
-        }
+        // Фильтр по роли не отправляется на бэкенд, так как не поддерживается API
 
         const response = await api.get<StaffListResponse>('/dashboard/admin/staffs', { params });
         return response.data;
     };
 
     const { data, isLoading, refetch } = useQuery({
-        queryKey: ['staffs', initialLimit, filters?.page, filters?.search, filters?.is_active, filters?.role, filters?.created_at_from, filters?.created_at_to],
+        queryKey: ['staffs', initialLimit, filters?.page, filters?.search, filters?.is_active, filters?.created_at_from, filters?.created_at_to],
         queryFn: fetchStaff,
         staleTime: 0, // Данные всегда считаются устаревшими для мгновенного обновления
     });
