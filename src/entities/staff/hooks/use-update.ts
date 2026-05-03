@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { staffApi } from '../api';
+import { api } from '@/shared/api/api';
 import type { UpdateStaffInput, Staff } from '../model';
 
 interface UseUpdateStaffResult {
@@ -48,18 +49,23 @@ export function useUpdateMe() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mutate = (_data: { full_name: string; email: string }, options?: { onSuccess?: () => void }) => {
+  const mutate = async (data: { full_name: string; email: string }, options?: { onSuccess?: () => void }) => {
     setIsPending(true);
     setError(null);
 
-    // В реальном проекте здесь будет вызов API для /me endpoint
-    // Пока используем заглушку
-    setTimeout(() => {
-      setIsPending(false);
+    try {
+      // Вызываем реальный API для обновления профиля текущего пользователя
+      await api.put('/dashboard/me', data);
+      
       if (options?.onSuccess) {
         options.onSuccess();
       }
-    }, 500);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Ошибка при обновлении профиля';
+      setError(errorMessage);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return { mutate, isPending, error };
