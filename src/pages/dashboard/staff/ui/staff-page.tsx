@@ -1,13 +1,9 @@
 import { StaffTable } from '@/widgets/staff-table';
 import { CreateStaffForm } from '@/features/create-staff';
 import type { Staff, StaffRole } from '@/entities/staff';
+import { staffApi } from '@/entities/staff/api/api';
 import { useState, useEffect } from 'react';
-
-// Моковые данные для текущего пользователя (в реальном приложении брать из session store)
-const CURRENT_USER: { id: number; role: StaffRole } = {
-  id: 1,
-  role: 'admin' as StaffRole, // или 'super_admin' для полного доступа
-};
+import { useSessionStore } from '@/entities/session/model/store';
 
 /**
  * Страница управления персоналом
@@ -24,32 +20,14 @@ export default function StaffPage() {
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  
+  const { user } = useSessionStore();
 
   const loadStaffList = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/dashboard/admin/staffs`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch staff list');
-      }
-
-      const data = await response.json();
-      
-      // Backend возвращает { items: [], total, limit, offset }
-      if (data && Array.isArray(data.items)) {
-        setStaffList(data.items);
-      } else if (Array.isArray(data)) {
-        setStaffList(data);
-      } else {
-        setStaffList([]);
-      }
+      const items = await staffApi.getAll();
+      setStaffList(items);
     } catch (error) {
       console.error('Failed to load staff list:', error);
       setStaffList([]);
@@ -74,6 +52,15 @@ export default function StaffPage() {
     );
   }
 
+  // Если пользователь не загружен, показываем загрузку
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Загрузка профиля...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -94,8 +81,8 @@ export default function StaffPage() {
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <StaffTable
           staffList={staffList}
-          currentUserId={CURRENT_USER.id}
-          currentUserRole={CURRENT_USER.role}
+          currentUserId={user.id}
+          currentUserRole={user.role as StaffRole}
           onRefresh={loadStaffList}
         />
       </div>
