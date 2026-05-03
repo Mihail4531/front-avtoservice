@@ -45,6 +45,8 @@ export interface StaffFilters {
     search?: string;
     role?: StaffRole;
     is_active?: boolean;
+    created_at_from?: string; // ISO 8601 format for backend *time.Time
+    created_at_to?: string;   // ISO 8601 format for backend *time.Time
     page?: number;
     limit?: number;
 }
