@@ -48,7 +48,7 @@ export function useUpdateMe() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mutate = (data: { full_name: string; email: string }, options?: { onSuccess?: () => void }) => {
+  const mutate = (_data: { full_name: string; email: string }, options?: { onSuccess?: () => void }) => {
     setIsPending(true);
     setError(null);
 
