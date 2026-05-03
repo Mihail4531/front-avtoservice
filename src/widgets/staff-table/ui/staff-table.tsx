@@ -8,6 +8,7 @@ import { cn } from '@/shared/lib/cn';
 import { useState } from 'react';
 import { Modal } from '@/shared/ui/modal';
 import { EditStaffForm } from '@/features/edit-staff/ui/EditStaffForm';
+import { CreateStaffForm } from '@/features/create-staff/ui/CreateStaffForm';
 import { type Staff, createStaffWithPermissions } from '@/entities/staff/model/types';
 import { useSessionStore } from '@/entities/session/model/store';
 
@@ -18,19 +19,26 @@ export const StaffTable = () => {
     
     // Состояние для модального окна редактирования
     const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    
+    // Состояние для модального окна создания
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Расчет общего количества страниц на основе данных из Go
     const totalPages = data ? Math.ceil(data.total / 10) : 0;
 
     const handleEditClick = (staff: Staff) => {
         setEditingStaff(staff);
-        setIsModalOpen(true);
+        setIsEditModalOpen(true);
     };
 
     const handleEditSuccess = () => {
-        setIsModalOpen(false);
+        setIsEditModalOpen(false);
         setEditingStaff(null);
+    };
+    
+    const handleCreateSuccess = () => {
+        setIsCreateModalOpen(false);
     };
 
     // Проверка возможности редактирования сотрудника
@@ -79,7 +87,10 @@ export const StaffTable = () => {
                             ))}
                         </div>
 
-                        <Button className="gap-2 font-bold bg-[var(--red)] hover:bg-red-700 ml-auto md:ml-0">
+                        <Button 
+                            className="gap-2 font-bold bg-[var(--red)] hover:bg-red-700 ml-auto md:ml-0"
+                            onClick={() => setIsCreateModalOpen(true)}
+                        >
                             <UserPlus className="w-4 h-4" />
                             Добавить
                         </Button>
@@ -198,9 +209,9 @@ export const StaffTable = () => {
             {/* Модальное окно редактирования сотрудника */}
             {editingStaff && (
                 <Modal
-                    isOpen={isModalOpen}
+                    isOpen={isEditModalOpen}
                     onClose={() => {
-                        setIsModalOpen(false);
+                        setIsEditModalOpen(false);
                         setEditingStaff(null);
                     }}
                     title="Редактирование сотрудника"
@@ -211,6 +222,15 @@ export const StaffTable = () => {
                     />
                 </Modal>
             )}
+            
+            {/* Модальное окно создания сотрудника */}
+            <Modal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                title="Создание сотрудника"
+            >
+                <CreateStaffForm onSuccess={handleCreateSuccess} />
+            </Modal>
         </div>
     );
 };

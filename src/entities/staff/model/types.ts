@@ -13,6 +13,17 @@ export interface Staff {
 }
 
 /**
+ * Тип для создания нового сотрудника через админку.
+ * Соответствует CreateStaffRequest в Go-сервисе.
+ */
+export interface CreateStaffRequest {
+    full_name: string;
+    email: string;
+    password: string;
+    role: Exclude<StaffRole, 'super_admin'>; // cannot create superadmin
+}
+
+/**
  * Тип для обновления сотрудника через админку.
  * Соответствует UpdateRequest в Go-сервисе.
  */
