@@ -1,6 +1,4 @@
 import { useState, useCallback } from 'react';
-import { staffApi } from '../api';
-import { api } from '@/shared/api/api';
 import type { UpdateStaffInput, Staff } from '../model';
 
 interface UseUpdateStaffResult {
@@ -23,7 +21,21 @@ export function useUpdateStaff(): UseUpdateStaffResult {
     setError(null);
 
     try {
-      const staff = await staffApi.update(id, data);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/dashboard/admin/staffs/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Ошибка при обновлении сотрудника');
+      }
+
+      const staff = await response.json();
       return staff;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Ошибка при обновлении сотрудника';
@@ -55,7 +67,20 @@ export function useUpdateMe() {
 
     try {
       // Вызываем реальный API для обновления профиля текущего пользователя
-      await api.put('/dashboard/me', data);
+      // Backend endpoint: PUT /dashboard/me
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/dashboard/me`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Ошибка при обновлении профиля');
+      }
       
       if (options?.onSuccess) {
         options.onSuccess();

@@ -9,7 +9,6 @@ export interface Staff {
   role: StaffRole;
   is_active: boolean;
   created_at: string;
-  updated_at: string;
 }
 
 /**
@@ -110,13 +109,13 @@ export const EDITABLE_ROLES: StaffRole[] = ['manager', 'admin'];
 export const STAFF_ROLES = ['manager', 'admin', 'super_admin'] as const;
 
 /**
- * Ответ API со списком сотрудников
+ * Ответ API со списком сотрудников (соответствует StaffListResponse в backend)
  */
 export interface StaffListResponse {
   items: Staff[];
   total: number;
-  page: number;
   limit: number;
+  offset: number;
 }
 
 /**

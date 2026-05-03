@@ -1,6 +1,5 @@
 import { StaffTable } from '@/widgets/staff-table';
 import { CreateStaffForm } from '@/features/create-staff';
-import { staffApi } from '@/entities/staff';
 import type { Staff, StaffRole } from '@/entities/staff';
 import { useState, useEffect } from 'react';
 
@@ -29,10 +28,31 @@ export default function StaffPage() {
   const loadStaffList = async () => {
     setIsLoading(true);
     try {
-      const data = await staffApi.getAll();
-      setStaffList(data);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/dashboard/admin/staffs`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch staff list');
+      }
+
+      const data = await response.json();
+      
+      // Backend возвращает { items: [], total, limit, offset }
+      if (data && Array.isArray(data.items)) {
+        setStaffList(data.items);
+      } else if (Array.isArray(data)) {
+        setStaffList(data);
+      } else {
+        setStaffList([]);
+      }
     } catch (error) {
       console.error('Failed to load staff list:', error);
+      setStaffList([]);
     } finally {
       setIsLoading(false);
     }
