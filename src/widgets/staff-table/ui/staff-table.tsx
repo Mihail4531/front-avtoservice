@@ -1,7 +1,7 @@
 'use client';
 
 import { useStaffList } from '@/features/staff-list/model/use-staff-list';
-import { Search, UserPlus, ShieldCheck, ChevronLeft, ChevronRight, Pencil, Calendar } from 'lucide-react';
+import { Search, UserPlus, ShieldCheck, ChevronLeft, ChevronRight, Pencil, Calendar, KeyRound } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/lib/cn';
@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Modal } from '@/shared/ui/modal';
 import { EditStaffForm } from '@/features/edit-staff/ui/EditStaffForm';
 import { CreateStaffForm } from '@/features/create-staff/ui/CreateStaffForm';
+import { ChangeStaffPasswordForm } from '@/features/change-staff-password/ui/ChangeStaffPasswordForm';
 import { type Staff, createStaffWithPermissions } from '@/entities/staff/model/types';
 import { useSessionStore } from '@/entities/session/model/store';
 
@@ -33,6 +34,10 @@ export const StaffTable = () => {
     const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     
+    // Состояние для модального окна смены пароля
+    const [changingPasswordStaff, setChangingPasswordStaff] = useState<Staff | null>(null);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    
     // Состояние для модального окна создания
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -44,10 +49,20 @@ export const StaffTable = () => {
         setIsEditModalOpen(true);
     };
 
+    const handleChangePasswordClick = (staff: Staff) => {
+        setChangingPasswordStaff(staff);
+        setIsPasswordModalOpen(true);
+    };
+
     const handleEditSuccess = () => {
         setIsEditModalOpen(false);
         setEditingStaff(null);
         refresh(); // Обновляем список после редактирования
+    };
+
+    const handleChangePasswordSuccess = () => {
+        setIsPasswordModalOpen(false);
+        setChangingPasswordStaff(null);
     };
     
     const handleCreateSuccess = () => {
@@ -208,19 +223,30 @@ export const StaffTable = () => {
                                         </span>
                                     </td>
                                     <td className="p-4">
-                                        {canEdit ? (
-                                            <button 
-                                                onClick={() => handleEditClick(staff)}
-                                                className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all"
-                                                title="Редактировать сотрудника"
-                                            >
-                                                <Pencil className="w-4 h-4 text-slate-400 hover:text-[var(--red)]" />
-                                            </button>
-                                        ) : (
-                                            <div className="p-2" title="Нет прав для редактирования">
-                                                <span className="text-xs text-slate-300">—</span>
-                                            </div>
-                                        )}
+                                        <div className="flex items-center gap-1">
+                                            {canEdit ? (
+                                                <button 
+                                                    onClick={() => handleEditClick(staff)}
+                                                    className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all"
+                                                    title="Редактировать сотрудника"
+                                                >
+                                                    <Pencil className="w-4 h-4 text-slate-400 hover:text-[var(--red)]" />
+                                                </button>
+                                            ) : (
+                                                <div className="p-2" title="Нет прав для редактирования">
+                                                    <span className="text-xs text-slate-300">—</span>
+                                                </div>
+                                            )}
+                                            {canEdit && (
+                                                <button 
+                                                    onClick={() => handleChangePasswordClick(staff)}
+                                                    className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-border transition-all"
+                                                    title="Сменить пароль сотрудника"
+                                                >
+                                                    <KeyRound className="w-4 h-4 text-slate-400 hover:text-[var(--red)]" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             );
@@ -275,6 +301,23 @@ export const StaffTable = () => {
                     <EditStaffForm 
                         staff={editingStaff} 
                         onSuccess={handleEditSuccess}
+                    />
+                </Modal>
+            )}
+            
+            {/* Модальное окно смены пароля сотрудника */}
+            {changingPasswordStaff && (
+                <Modal
+                    isOpen={isPasswordModalOpen}
+                    onClose={() => {
+                        setIsPasswordModalOpen(false);
+                        setChangingPasswordStaff(null);
+                    }}
+                    title={`Смена пароля: ${changingPasswordStaff.full_name}`}
+                >
+                    <ChangeStaffPasswordForm 
+                        staffId={changingPasswordStaff.id} 
+                        onSuccess={handleChangePasswordSuccess}
                     />
                 </Modal>
             )}
