@@ -1,14 +1,6 @@
 import { create } from 'zustand';
 import { api } from '@/shared/api/api';
-
-interface User {
-    id: number;
-    full_name: string;
-    email: string;
-    role: string;
-    is_active: boolean;
-    created_at: string; // В JSON приходит как строка (ISO 8601)
-}
+import type { User } from './types';
 
 interface SessionState {
     user: User | null;

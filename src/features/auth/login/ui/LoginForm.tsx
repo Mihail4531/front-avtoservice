@@ -1,7 +1,8 @@
+'use client';
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 
@@ -10,13 +11,10 @@ import { Button } from '@/shared/ui/button';
 import { Label } from '@/shared/ui/label';
 
 import { loginSchema, type LoginFormValues } from '../model/schema';
-import { useLogin } from '../api/use-login';
-import { useSessionStore } from '@/entities/session/model/store';
+import { useLogin } from '@/entities/session';
 
 export const LoginForm = () => {
-    const navigate = useNavigate();
     const { mutate, isPending } = useLogin();
-    const initAuth = useSessionStore((s) => s.initAuth); // ← используем initAuth вместо setAuth
     const [showPassword, setShowPassword] = useState(false);
 
     const {
@@ -29,16 +27,7 @@ export const LoginForm = () => {
     });
 
     const onSubmit = (data: LoginFormValues) => {
-        mutate(data, {
-            onSuccess: async () => {
-                // Бэкенд возвращает 204, поэтому запрашиваем профиль отдельно
-                await initAuth();
-                navigate('/', { replace: true });
-            },
-            onError: (msg) => {
-                console.error(msg); // замени на toast.error(msg) при наличии
-            },
-        });
+        mutate(data);
     };
 
     return (
