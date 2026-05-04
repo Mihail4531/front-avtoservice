@@ -1,14 +1,15 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createCategoryArticleSchema, type CreateCategoryArticleSchema } from '../model/schema';
 import { useCreateCategoryArticle } from '@/entities/category-article/hooks/use-create';
 import { Button } from '@/shared/ui/button';
-import { Image as ImageIcon, Type, FileText } from 'lucide-react';
+import { Type, FileText } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { useState } from 'react';
-import { api } from '@/shared/api/api';
+import { useState, useEffect } from 'react';
+import { previewSlug } from '@/entities/category-article/api/api';
+import { FileUpload } from '@/shared/ui/file-upload';
 
 interface Props {
     onSuccess?: () => void;
@@ -16,10 +17,10 @@ interface Props {
 
 export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
     const { mutate: createCategoryArticle, isPending, error } = useCreateCategoryArticle();
-    const [previewSlug, setPreviewSlug] = useState<string>('');
+    const [previewSlugValue, setPreviewSlugValue] = useState<string>('');
     const [isGeneratingSlug, setIsGeneratingSlug] = useState(false);
 
-    const { register, handleSubmit, formState: { errors }, watch } = useForm<CreateCategoryArticleSchema>({
+    const { register, handleSubmit, formState: { errors }, watch, control } = useForm<CreateCategoryArticleSchema>({
         resolver: zodResolver(createCategoryArticleSchema),
         defaultValues: {
             title: '',
@@ -30,22 +31,28 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
 
     const title = watch('title');
 
-    // Функция для предпросмотра slug
-    const handleGenerateSlugPreview = async () => {
-        if (!title || title.length < 3) return;
-        
-        setIsGeneratingSlug(true);
-        try {
-            const response = await api.get('/dashboard/admin/categories/articles/slug-preview', {
-                params: { title }
-            });
-            setPreviewSlug(response.data.slug);
-        } catch (err) {
-            console.error('Ошибка при генерации slug:', err);
-        } finally {
-            setIsGeneratingSlug(false);
+    // Функция для предпросмотра slug с дебаунсом
+    useEffect(() => {
+        if (!title || title.length < 3) {
+            setPreviewSlugValue('');
+            return;
         }
-    };
+
+        setIsGeneratingSlug(true);
+        const timeoutId = setTimeout(async () => {
+            try {
+                const response = await previewSlug(title);
+                setPreviewSlugValue(response.slug);
+            } catch (err) {
+                console.error('Ошибка при генерации slug:', err);
+                setPreviewSlugValue('');
+            } finally {
+                setIsGeneratingSlug(false);
+            }
+        }, 500); // Дебаунс 500мс
+
+        return () => clearTimeout(timeoutId);
+    }, [title]);
 
     const onSubmit = (data: CreateCategoryArticleSchema) => {
         createCategoryArticle(data, {
@@ -58,7 +65,7 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
             {/* Информация о бизнес-ограничениях */}
             <div className="bg-muted/50 border border-border rounded-xl p-4">
                 <p className="text-xs text-muted-foreground font-medium">
-                    <strong>Обратите внимание:</strong> Slug генерируется автоматически на основе названия категории.
+                    <strong>Обратите внимание:</strong> Slug генерируется автоматически на основе названия категории. Изображение можно перетащить или выбрать из файловой системы.
                 </p>
             </div>
 
@@ -77,7 +84,6 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                                 "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground",
                                 errors.title ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
                             )}
-                            onBlur={handleGenerateSlugPreview}
                         />
                     </div>
                     {errors.title && (
@@ -86,17 +92,34 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                         </p>
                     )}
                     
-                    {/* Предпросмотр slug */}
-                    {(previewSlug || isGeneratingSlug) && (
-                        <div className="mt-2 p-3 bg-muted/30 border border-border rounded-lg">
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Предпросмотр URL:</p>
-                            <p className="text-sm font-mono text-foreground">
-                                {isGeneratingSlug ? (
-                                    <span className="text-muted-foreground">Генерация...</span>
-                                ) : (
-                                    <span className="text-green-600 dark:text-green-400">/dashboard/admin/categories/articles/{previewSlug}</span>
-                                )}
-                            </p>
+                    {/* Предпросмотр slug - улучшенный дизайн */}
+                    {(previewSlugValue || isGeneratingSlug) && (
+                        <div className="mt-2 p-4 bg-gradient-to-r from-muted/30 to-muted/50 border border-border rounded-xl">
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className={cn(
+                                    "w-2 h-2 rounded-full",
+                                    isGeneratingSlug ? "bg-yellow-500 animate-pulse" : "bg-green-500"
+                                )} />
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                    {isGeneratingSlug ? "Генерация URL..." : "Автоматически сгенерированный URL"}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2 bg-card/50 rounded-lg p-3 font-mono text-sm border border-border/50">
+                                <span className="text-muted-foreground select-none">/dashboard/admin/categories/articles/</span>
+                                <span className={cn(
+                                    "font-bold",
+                                    isGeneratingSlug ? "text-muted-foreground" : "text-green-600 dark:text-green-400"
+                                )}>
+                                    {isGeneratingSlug ? (
+                                        <span className="inline-flex items-center gap-1">
+                                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            обработка...
+                                        </span>
+                                    ) : (
+                                        previewSlugValue
+                                    )}
+                                </span>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -125,27 +148,23 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                     )}
                 </div>
 
-                {/* Поле Изображение (URL) */}
+                {/* Поле Изображение - Drag & Drop */}
                 <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
-                        Путь к изображению
+                        Изображение категории
                     </label>
-                    <div className="relative">
-                        <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input
-                            {...register('image_path')}
-                            placeholder="/images/category-example.png"
-                            className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground",
-                                errors.image_path ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
-                            )}
-                        />
-                    </div>
-                    {errors.image_path && (
-                        <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
-                            {errors.image_path.message}
-                        </p>
-                    )}
+                    <Controller
+                        name="image_path"
+                        control={control}
+                        render={({ field }) => (
+                            <FileUpload
+                                value={field.value}
+                                onChange={field.onChange}
+                                error={!!errors.image_path}
+                                disabled={isPending}
+                            />
+                        )}
+                    />
                 </div>
             </div>
 
