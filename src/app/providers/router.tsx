@@ -7,6 +7,7 @@ import { LoginPage } from '@/pages/(auth)/login/page';
 import { ProfilePage } from '@/pages/dasboard/profile/page';
 import { Sidebar } from '@/widgets/sidebar/ui/sidebar';
 import StaffPage from '@/pages/dasboard/staff/page';
+import CategoryArticlesPage from '@/pages/dasboard/category-articles/page';
 import { SettingsPage } from '@/pages/dasboard/settings/page';
 
 export const AppRouter = () => {
