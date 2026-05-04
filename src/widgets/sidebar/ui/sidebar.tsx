@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import {
     LayoutGrid, ClipboardList, Car, UserCog,
-    DollarSign, CalendarDays, Warehouse, Settings, ChevronRight
+    DollarSign, CalendarDays, Warehouse, Settings, ChevronRight,
+    BookOpen
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { useSessionStore } from '@/entities/session/model/store';
@@ -22,6 +23,12 @@ const menuItems = [
             { name: 'Финансы', icon: DollarSign, path: '/dashboard/finance' },
             { name: 'Запись', icon: CalendarDays, path: '/dashboard/appointments' },
             { name: 'Склад', icon: Warehouse, path: '/dashboard/inventory' },
+        ]
+    },
+
+    {
+        group: 'СТАТЬИ', items: [
+            { name: 'Категории статей', icon: BookOpen, path: '/dashboard/admin/categories/articles' },
         ]
     }
 ];
