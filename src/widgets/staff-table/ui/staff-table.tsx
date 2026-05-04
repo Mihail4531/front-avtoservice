@@ -159,7 +159,7 @@ export const StaffTable = () => {
                         {/* Кнопка сброса фильтров */}
                         {(filters.search || filters.created_at_from || filters.created_at_to || filters.is_active !== undefined) && (
                             <button
-                                onClick={() => setFilters({ search: '', is_active: undefined, role: undefined, created_at_from: '', created_at_to: '', page: 0 })}
+                                onClick={() => setFilters({ search: '', is_active: undefined,  created_at_from: '', created_at_to: '', page: 0 })}
                                 className="px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             >
                                 Сбросить
