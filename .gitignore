@@ -2,48 +2,73 @@
 # Dependencies
 node_modules/
 
-# Build outputs
+# Build artifacts
 dist/
 build/
 target/
 
-# Logs
-*.log
+# Vite specific
+.node_build/
+.vite/
 
 # Environment variables
 .env
 .env.local
-*.env.*
+.env.*
 
-# IDE specific
-.vscode/
-.idea/
+# Logs
+*.log
+
+# Temporary files
+*.tmp
 *.swp
 *.swo
-*.tmp
 
-# Python specific
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-*.so
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
 .coverage
-coverage/
-htmlcov/
+.nox/
+.pytest_cache/
+.mypy_cache/
 
-# Compiled binary files
-*.exe
-*.dll
-*.so
-*.dylib
-*.a
-*.o
-*.obj
-*.out
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
+dist/
+build/
+*.min.js
+*.min.css
 
-# Compressed files
+# TypeScript
+*.tsbuildinfo
+*.tsx.build-info.json
+
+# Compressed
 *.zip
 *.gz
 *.tar
@@ -62,16 +87,8 @@ htmlcov/
 *.Z
 *.lz
 *.lzo
-
-# System files
-.DS_Store
-Thumbs.db
-
-# Testing
-.mypy_cache/
-.pytest_cache/
-coverage/
-htmlcov/
-.nyc_output/
-istanbul/
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
 ```
