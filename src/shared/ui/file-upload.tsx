@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
@@ -19,11 +19,11 @@ export const FileUpload = ({ value, onChange, error, disabled }: FileUploadProps
     const [isUploading, setIsUploading] = useState(false);
 
     // Обновляем preview при изменении value извне
-    useState(() => {
+    useEffect(() => {
         if (value && !value.startsWith('blob:')) {
             setPreview(value);
         }
-    });
+    }, [value]);
 
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         if (acceptedFiles.length === 0 || disabled) return;
@@ -44,7 +44,7 @@ export const FileUpload = ({ value, onChange, error, disabled }: FileUploadProps
 
         setIsUploading(true);
 
-        // Создаем URL для предпросмотра
+        // Создаем URL для предпросмотра (blob)
         const objectUrl = URL.createObjectURL(file);
         setPreview(objectUrl);
 
@@ -52,11 +52,12 @@ export const FileUpload = ({ value, onChange, error, disabled }: FileUploadProps
             // Загрузка файла на сервер
             const response = await uploadFile(file, 'categories/articles');
             onChange(response.path);
-            setPreview(response.path);
+            // После успешной загрузки preview переключится на URL с бэка через useEffect
         } catch (err) {
             console.error('Ошибка при загрузке файла:', err);
             alert('Не удалось загрузить файл');
             setPreview(undefined);
+            onChange('');
         } finally {
             setIsUploading(false);
         }
@@ -79,6 +80,15 @@ export const FileUpload = ({ value, onChange, error, disabled }: FileUploadProps
         setPreview(undefined);
         onChange('');
     };
+
+    // Очищаем blob URL при размонтировании компонента
+    useEffect(() => {
+        return () => {
+            if (preview && preview.startsWith('blob:')) {
+                URL.revokeObjectURL(preview);
+            }
+        };
+    }, [preview]);
 
     return (
         <div className="space-y-2">
