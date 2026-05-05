@@ -1,13 +1,14 @@
 'use client';
 
 import { useCategoryArticleList } from '@/features/category-article-list/model/use-category-article-list';
-import { Search, FilePlus, ChevronLeft, ChevronRight, Calendar, Pencil, Eye, EyeOff } from 'lucide-react';
+import { Search, FilePlus, ChevronLeft, ChevronRight, Calendar, Pencil, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/lib/cn';
 import { useState } from 'react';
 import { Modal } from '@/shared/ui/modal';
 import { CreateCategoryArticleForm } from '@/features/create-category-article/ui/CreateCategoryArticleForm';
+import { useDeleteCategoryArticle } from '@/entities/category-article/hooks/use-delete';
 
 export const CategoryArticleTable = () => {
     // Используем лимит 10 по умолчанию
@@ -26,6 +27,11 @@ export const CategoryArticleTable = () => {
 
     // Состояние для модального окна создания
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    // Состояние для модального окна подтверждения удаления
+    const [deleteCategoryId, setDeleteCategoryId] = useState<number | null>(null);
+
+    // Хук для удаления категории
+    const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategoryArticle();
 
     // Расчет общего количества страниц на основе данных из Go
     const totalPages = data ? Math.ceil(data.total / 5) : 0;
@@ -37,6 +43,25 @@ export const CategoryArticleTable = () => {
 
     const handleFilterChange = (newFilters: Partial<typeof filters>) => {
         setFilters(prev => ({ ...prev, ...newFilters, page: newFilters.page !== undefined ? newFilters.page : prev.page }));
+    };
+
+    const handleDeleteClick = (id: number) => {
+        setDeleteCategoryId(id);
+    };
+
+    const handleDeleteConfirm = () => {
+        if (deleteCategoryId !== null) {
+            deleteCategory(deleteCategoryId, {
+                onSuccess: () => {
+                    setDeleteCategoryId(null);
+                    refresh();
+                }
+            });
+        }
+    };
+
+    const handleDeleteCancel = () => {
+        setDeleteCategoryId(null);
     };
 
     return (
@@ -199,6 +224,13 @@ export const CategoryArticleTable = () => {
                                                 <Eye className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
                                             )}
                                         </button>
+                                        <button
+                                            className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
+                                            title="Удалить категорию"
+                                            onClick={() => handleDeleteClick(category.id)}
+                                        >
+                                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-red-600" />
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -248,6 +280,51 @@ export const CategoryArticleTable = () => {
                 className="max-w-xl"
             >
                 <CreateCategoryArticleForm onSuccess={handleCreateSuccess} />
+            </Modal>
+
+            {/* Модальное окно подтверждения удаления */}
+            <Modal
+                isOpen={deleteCategoryId !== null}
+                onClose={handleDeleteCancel}
+                title="Подтверждение удаления"
+                className="max-w-md"
+            >
+                <div className="space-y-6">
+                    <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                            <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="font-bold text-foreground text-lg">
+                                Удалить категорию?
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                                Это действие нельзя отменить. Категория будет permanently удалена из системы вместе со всеми связанными данными.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleDeleteCancel}
+                            disabled={isDeleting}
+                            className="flex-1"
+                        >
+                            Отмена
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDeleteConfirm}
+                            disabled={isDeleting}
+                            className="flex-1 bg-[var(--red)] hover:bg-red-700"
+                        >
+                            {isDeleting ? 'Удаление...' : 'Удалить'}
+                        </Button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );
