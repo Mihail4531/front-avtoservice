@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { uploadFile } from '@/entities/category-article/api/api';
@@ -14,48 +14,63 @@ interface FileUploadProps {
     disabled?: boolean;
 }
 
+/**
+ * Утилита для формирования пути.
+ * ВАЖНО: Мы используем порт 8080, так как твой сервер стартует на нем.
+ */
+const getImageUrl = (path?: string) => {
+    if (!path) return '';
+    if (path.startsWith('blob:') || path.startsWith('http')) return path;
+
+    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+    // Очищаем от начальных слэшей и от слова uploads/ в начале, чтобы склеить вручную
+    const cleanPath = path.replace(/^\/+/, '').replace(/^uploads\//, '');
+
+    return `${BASE_URL}/uploads/${cleanPath}`;
+};
+
 export const FileUpload = ({ value, onChange, error, disabled }: FileUploadProps) => {
     const [preview, setPreview] = useState<string | undefined>(value);
     const [isUploading, setIsUploading] = useState(false);
+    const blobUrlRef = useRef<string | null>(null);
 
-    // Обновляем preview при изменении value извне
+    // Синхронизация внешнего значения
     useEffect(() => {
-        if (value && !value.startsWith('blob:')) {
+        // Если пришло новое значение сверху, и это НЕ загрузка, 
+        // и у нас сейчас НЕ активен локальный blob
+        if (value && !isUploading && !preview?.startsWith('blob:')) {
             setPreview(value);
+        } else if (!value && !isUploading) {
+            setPreview(undefined);
         }
-    }, [value]);
+    }, [value, isUploading, preview]);
 
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         if (acceptedFiles.length === 0 || disabled) return;
 
         const file = acceptedFiles[0];
-        
-        // Проверка типа файла
-        if (!file.type.startsWith('image/')) {
-            alert('Пожалуйста, загрузите изображение');
-            return;
-        }
-
-        // Проверка размера (макс 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            alert('Размер файла не должен превышать 5MB');
-            return;
-        }
+        if (!file.type.startsWith('image/')) return;
 
         setIsUploading(true);
 
-        // Создаем URL для предпросмотра (blob)
+        // Создаем временную ссылку
+        if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
         const objectUrl = URL.createObjectURL(file);
+        blobUrlRef.current = objectUrl;
+
+        // Сразу ставим превью как blob
         setPreview(objectUrl);
 
         try {
-            // Загрузка файла на сервер
             const response = await uploadFile(file, 'categories/articles');
+            // Сообщаем родителю путь (напр. "categories/articles/uuid.jpg")
             onChange(response.path);
-            // После успешной загрузки preview переключится на URL с бэка через useEffect
+
+            // ВАЖНО: Мы НЕ вызываем setPreview(response.path) здесь.
+            // Мы оставляем blobUrl, чтобы картинка не "мигнула" при замене URL на серверный.
         } catch (err) {
-            console.error('Ошибка при загрузке файла:', err);
-            alert('Не удалось загрузить файл');
+            console.error('Upload error:', err);
             setPreview(undefined);
             onChange('');
         } finally {
@@ -65,30 +80,26 @@ export const FileUpload = ({ value, onChange, error, disabled }: FileUploadProps
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
-        accept: {
-            'image/*': ['.png', '.jpg', '.jpeg',  '.webp']
-        },
+        accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] },
         maxFiles: 1,
-        maxSize: 5 * 1024 * 1024,
         disabled: disabled || isUploading
     });
 
-    const handleRemove = () => {
-        if (preview && preview.startsWith('blob:')) {
-            URL.revokeObjectURL(preview);
+    const handleRemove = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (blobUrlRef.current) {
+            URL.revokeObjectURL(blobUrlRef.current);
+            blobUrlRef.current = null;
         }
         setPreview(undefined);
         onChange('');
     };
 
-    // Очищаем blob URL при размонтировании компонента
     useEffect(() => {
         return () => {
-            if (preview && preview.startsWith('blob:')) {
-                URL.revokeObjectURL(preview);
-            }
+            if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
         };
-    }, [preview]);
+    }, []);
 
     return (
         <div className="space-y-2">
@@ -96,102 +107,56 @@ export const FileUpload = ({ value, onChange, error, disabled }: FileUploadProps
                 <div
                     {...getRootProps()}
                     className={cn(
-                        "relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200",
-                        isDragActive
-                            ? "border-[var(--red)] bg-red-50 dark:bg-red-900/10"
-                            : error
-                                ? "border-red-500 hover:border-red-400"
-                                : "border-border hover:border-[var(--red)]",
-                        disabled && "opacity-50 cursor-not-allowed"
+                        "relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all",
+                        isDragActive ? "border-red-500 bg-red-50" : error ? "border-red-500" : "border-border",
+                        (disabled || isUploading) && "opacity-50 cursor-not-allowed"
                     )}
                 >
                     <input {...getInputProps()} />
-                    
                     {isUploading ? (
                         <div className="flex flex-col items-center gap-3">
-                            <div className="w-8 h-8 border-2 border-[var(--red)] border-t-transparent rounded-full animate-spin" />
-                            <p className="text-sm text-muted-foreground font-medium">Загрузка...</p>
+                            <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-sm">Загрузка...</p>
                         </div>
                     ) : (
                         <div className="flex flex-col items-center gap-3">
-                            <div className={cn(
-                                "w-12 h-12 rounded-full flex items-center justify-center",
-                                isDragActive
-                                    ? "bg-red-100 dark:bg-red-900/30"
-                                    : "bg-muted"
-                            )}>
-                                <Upload className={cn(
-                                    "w-6 h-6",
-                                    isDragActive
-                                        ? "text-[var(--red)]"
-                                        : "text-muted-foreground"
-                                )} />
-                            </div>
-                            
-                            <div className="space-y-1">
-                                <p className="text-sm font-semibold text-foreground">
-                                    {isDragActive
-                                        ? "Отпустите файл здесь"
-                                        : "Перетащите изображение сюда"}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                    или нажмите для выбора файла
-                                </p>
-                            </div>
-                            
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <span>PNG, JPG, GIF, WEBP</span>
-                                <span>•</span>
-                                <span>до 5MB</span>
-                            </div>
+                            <Upload className="w-6 h-6 text-muted-foreground" />
+                            <p className="text-sm font-medium">Загрузить фото</p>
                         </div>
                     )}
                 </div>
             ) : (
-                <div className="relative group">
-                    <div className="relative rounded-xl overflow-hidden border border-border">
+                <div className="relative group w-full">
+                    <div className="relative rounded-xl overflow-hidden border border-border bg-muted">
                         <img
-                            src={preview}
+                            src={getImageUrl(preview)}
                             alt="Preview"
-                            className="w-full h-48 object-cover"
+                            className={cn(
+                                "w-full h-48 object-cover transition-opacity",
+                                isUploading ? "opacity-50" : "opacity-100"
+                            )}
                         />
-                        
-                        {!disabled && (
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+
+                        {isUploading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                                <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            </div>
+                        )}
+
+                        {!disabled && !isUploading && (
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <Button
                                     type="button"
                                     variant="destructive"
                                     size="sm"
                                     onClick={handleRemove}
-                                    className="bg-red-500 hover:bg-red-600"
                                 >
-                                    <X className="w-4 h-4 mr-2" />
-                                    Удалить
+                                    Заменить фото
                                 </Button>
                             </div>
                         )}
-                        
-                        {isUploading && (
-                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                <div className="flex flex-col items-center gap-2">
-                                    <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    <p className="text-white text-sm font-medium">Загрузка...</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    
-                    <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                        <ImageIcon className="w-3 h-3" />
-                        <span>Изображение загружено</span>
                     </div>
                 </div>
-            )}
-            
-            {error && (
-                <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
-                    Изображение обязательно
-                </p>
             )}
         </div>
     );
