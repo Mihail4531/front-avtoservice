@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
+import { uploadFile } from '@/entities/category-article/api/api';
 
 interface FileUploadProps {
     value?: string;
@@ -17,7 +18,14 @@ export const FileUpload = ({ value, onChange, error, disabled }: FileUploadProps
     const [preview, setPreview] = useState<string | undefined>(value);
     const [isUploading, setIsUploading] = useState(false);
 
-    const onDrop = useCallback((acceptedFiles: File[]) => {
+    // Обновляем preview при изменении value извне
+    useState(() => {
+        if (value && !value.startsWith('blob:')) {
+            setPreview(value);
+        }
+    });
+
+    const onDrop = useCallback(async (acceptedFiles: File[]) => {
         if (acceptedFiles.length === 0 || disabled) return;
 
         const file = acceptedFiles[0];
@@ -40,19 +48,18 @@ export const FileUpload = ({ value, onChange, error, disabled }: FileUploadProps
         const objectUrl = URL.createObjectURL(file);
         setPreview(objectUrl);
 
-        // Имитация загрузки на сервер
-        // В реальном проекте здесь будет отправка файла на сервер
-        setTimeout(() => {
-            // Для демонстрации используем base64 или путь
-            // В реальности здесь будет ответ сервера с путем к файлу
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result as string;
-                onChange(base64String);
-                setIsUploading(false);
-            };
-            reader.readAsDataURL(file);
-        }, 500);
+        try {
+            // Загрузка файла на сервер
+            const response = await uploadFile(file, 'categories/articles');
+            onChange(response.path);
+            setPreview(response.path);
+        } catch (err) {
+            console.error('Ошибка при загрузке файла:', err);
+            alert('Не удалось загрузить файл');
+            setPreview(undefined);
+        } finally {
+            setIsUploading(false);
+        }
     }, [onChange, disabled]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({

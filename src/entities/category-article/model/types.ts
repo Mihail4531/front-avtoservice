@@ -6,7 +6,7 @@ export interface CategoryArticle {
     version: number;
     slug: string;
     description: string;
-    image_path: string;
+    image_url: string;
     is_active: boolean;
     created_at: string;
 }
@@ -19,6 +19,10 @@ export interface CreateCategoryArticleRequest {
     title: string;
     description: string;
     image_path: string;
+}
+
+export interface UploadResponse {
+    path: string;
 }
 
 export interface CategoryArticleListResponse {
