@@ -8,7 +8,7 @@ import { Button } from '@/shared/ui/button';
 import { Type, FileText } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { useState, useEffect } from 'react';
-import { previewSlug } from '@/entities/category-article/api/api';
+import { previewSlug, uploadFile } from '@/entities/category-article/api/api';
 import { FileUpload } from '@/shared/ui/file-upload';
 
 interface Props {
@@ -16,28 +16,29 @@ interface Props {
 }
 
 export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
-    const { mutate: createCategoryArticle, isPending, error } = useCreateCategoryArticle();
+    const { mutate: createCategoryArticle, isPending: isCreating, error } = useCreateCategoryArticle();
     const [previewSlugValue, setPreviewSlugValue] = useState<string>('');
     const [isGeneratingSlug, setIsGeneratingSlug] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+    const isPending = isCreating || isUploadingImage;
 
     const { register, handleSubmit, formState: { errors }, watch, control } = useForm<CreateCategoryArticleSchema>({
         resolver: zodResolver(createCategoryArticleSchema),
         defaultValues: {
             title: '',
             description: '',
-            image_path: '',
+            image_path: undefined,
         },
     });
 
     const title = watch('title');
 
-    // Функция для предпросмотра slug с дебаунсом
     useEffect(() => {
         if (!title || title.length < 3) {
             setPreviewSlugValue('');
             return;
         }
-
         setIsGeneratingSlug(true);
         const timeoutId = setTimeout(async () => {
             try {
@@ -49,23 +50,48 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
             } finally {
                 setIsGeneratingSlug(false);
             }
-        }, 500); // Дебаунс 500мс
-
+        }, 500);
         return () => clearTimeout(timeoutId);
     }, [title]);
 
-    const onSubmit = (data: CreateCategoryArticleSchema) => {
-        createCategoryArticle(data, {
-            onSuccess: () => onSuccess?.(),
-        });
+    const onSubmit = async (data: CreateCategoryArticleSchema) => {
+        let imagePath: string;
+
+        // Если в image_path лежит File — загружаем на бэк
+        if (data.image_path instanceof File) {
+            setIsUploadingImage(true);
+            try {
+                const response = await uploadFile(data.image_path, 'categories/articles');
+                imagePath = response.path;
+            } catch (err) {
+                console.error('Ошибка загрузки картинки:', err);
+                alert('Не удалось загрузить картинку');
+                setIsUploadingImage(false);
+                return;
+            }
+            setIsUploadingImage(false);
+        } else {
+            // Уже существующий путь (для редактирования)
+            imagePath = data.image_path;
+        }
+
+        createCategoryArticle(
+            {
+                title: data.title,
+                description: data.description,
+                image_path: imagePath,
+            },
+            {
+                onSuccess: () => onSuccess?.(),
+            }
+        );
     };
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Информация о бизнес-ограничениях */}
             <div className="bg-muted/50 border border-border rounded-xl p-4">
                 <p className="text-xs text-muted-foreground font-medium">
-                    <strong>Обратите внимание:</strong> Slug генерируется автоматически на основе названия категории. Изображение можно перетащить или выбрать из файловой системы.
+                    <strong>Обратите внимание:</strong> Slug генерируется автоматически на основе названия категории. Изображение загружается при сохранении формы.
                 </p>
             </div>
 
@@ -80,6 +106,7 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                         <input
                             {...register('title')}
                             placeholder="Например: Техническое обслуживание"
+                            disabled={isPending}
                             className={cn(
                                 "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground",
                                 errors.title ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
@@ -91,8 +118,7 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                             {errors.title.message}
                         </p>
                     )}
-                    
-                    {/* Предпросмотр slug - улучшенный дизайн */}
+
                     {(previewSlugValue || isGeneratingSlug) && (
                         <div className="mt-2 p-3 bg-gradient-to-r from-muted/30 to-muted/50 border border-border rounded-lg">
                             <div className="flex items-center gap-2 mb-1.5">
@@ -110,21 +136,14 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                                     "font-bold truncate",
                                     isGeneratingSlug ? "text-muted-foreground" : "text-green-600 dark:text-green-400"
                                 )}>
-                                    {isGeneratingSlug ? (
-                                        <span className="inline-flex items-center gap-1">
-                                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                            обработка...
-                                        </span>
-                                    ) : (
-                                        previewSlugValue
-                                    )}
+                                    {isGeneratingSlug ? 'обработка...' : previewSlugValue}
                                 </span>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Поле Описание */}
+                {/* Описание */}
                 <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                         Описание
@@ -135,6 +154,7 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                             {...register('description')}
                             placeholder="Краткое описание категории..."
                             rows={4}
+                            disabled={isPending}
                             className={cn(
                                 "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-medium text-foreground resize-y",
                                 errors.description ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
@@ -148,7 +168,7 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                     )}
                 </div>
 
-                {/* Поле Изображение - Drag & Drop */}
+                {/* Изображение */}
                 <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                         Изображение категории
@@ -165,6 +185,11 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                             />
                         )}
                     />
+                    {errors.image_path && (
+                        <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
+                            {errors.image_path.message as string}
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -181,7 +206,7 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                 disabled={isPending}
                 className="w-full bg-[var(--red)] hover:bg-red-600 text-white font-bold py-6 rounded-xl shadow-lg shadow-red-100 transition-all active:scale-[0.98]"
             >
-                {isPending ? 'Создание...' : 'Создать категорию'}
+                {isUploadingImage ? 'Загружаем картинку...' : isCreating ? 'Создание...' : 'Создать категорию'}
             </Button>
         </form>
     );
