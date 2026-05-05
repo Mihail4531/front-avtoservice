@@ -94,20 +94,20 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                     
                     {/* Предпросмотр slug - улучшенный дизайн */}
                     {(previewSlugValue || isGeneratingSlug) && (
-                        <div className="mt-2 p-4 bg-gradient-to-r from-muted/30 to-muted/50 border border-border rounded-xl">
-                            <div className="flex items-center gap-2 mb-2">
+                        <div className="mt-2 p-3 bg-gradient-to-r from-muted/30 to-muted/50 border border-border rounded-lg">
+                            <div className="flex items-center gap-2 mb-1.5">
                                 <div className={cn(
                                     "w-2 h-2 rounded-full",
                                     isGeneratingSlug ? "bg-yellow-500 animate-pulse" : "bg-green-500"
                                 )} />
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
                                     {isGeneratingSlug ? "Генерация URL..." : "Автоматически сгенерированный URL"}
                                 </p>
                             </div>
-                            <div className="flex items-center gap-2 bg-card/50 rounded-lg p-3 font-mono text-sm border border-border/50">
-                                <span className="text-muted-foreground select-none">/dashboard/admin/categories/articles/</span>
+                            <div className="flex items-center gap-1 bg-card/50 rounded-md p-2 font-mono text-xs border border-border/50 overflow-hidden">
+                                <span className="text-muted-foreground select-none shrink-0">/dashboard/admin/categories/articles/</span>
                                 <span className={cn(
-                                    "font-bold",
+                                    "font-bold truncate",
                                     isGeneratingSlug ? "text-muted-foreground" : "text-green-600 dark:text-green-400"
                                 )}>
                                     {isGeneratingSlug ? (
@@ -130,13 +130,13 @@ export const CreateCategoryArticleForm = ({ onSuccess }: Props) => {
                         Описание
                     </label>
                     <div className="relative">
-                        <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <FileText className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                         <textarea
                             {...register('description')}
                             placeholder="Краткое описание категории..."
-                            rows={3}
+                            rows={4}
                             className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground resize-none",
+                                "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-medium text-foreground resize-y",
                                 errors.description ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
                             )}
                         />
