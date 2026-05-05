@@ -20,7 +20,11 @@ export const uploadFile = async (file: File, folder?: string): Promise<{ path: s
         formData.append('folder', folder);
     }
     
-    const response = await api.post<{ path: string }>('/dashboard/admin/uploads', formData);
+    const response = await api.post<{ path: string }>('/dashboard/admin/uploads', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
     
     return response.data;
 };
