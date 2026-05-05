@@ -1,14 +1,13 @@
 'use client';
 
 import { useCategoryArticleList } from '@/features/category-article-list/model/use-category-article-list';
-import { Search, FilePlus, ChevronLeft, ChevronRight, Calendar, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Search, FilePlus, ChevronLeft, ChevronRight, Calendar, Pencil, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/lib/cn';
 import { useState } from 'react';
 import { Modal } from '@/shared/ui/modal';
 import { CreateCategoryArticleForm } from '@/features/create-category-article/ui/CreateCategoryArticleForm';
-import { type CategoryArticle } from '@/entities/category-article/model/types';
 
 export const CategoryArticleTable = () => {
     // Используем лимит 10 по умолчанию
@@ -148,9 +147,9 @@ export const CategoryArticleTable = () => {
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                                            {category.image_path ? (
+                                            {category.image_url ? (
                                                 <img 
-                                                    src={category.image_path} 
+                                                    src={category.image_url} 
                                                     alt={category.title}
                                                     className="w-full h-full object-cover"
                                                 />
