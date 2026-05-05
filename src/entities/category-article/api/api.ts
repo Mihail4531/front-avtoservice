@@ -11,6 +11,11 @@ export const deleteCategoryArticle = async (id: number) => {
     return response.data;
 };
 
+export const getCategoryArticleById = async (id: number) => {
+    const response = await api.get(`/dashboard/admin/categories/articles/${id}`);
+    return response.data;
+};
+
 export const previewSlug = async (title: string): Promise<SlugPreviewResponse> => {
     const response = await api.get<SlugPreviewResponse>('/dashboard/admin/categories/articles/slug-preview', {
         params: { title }

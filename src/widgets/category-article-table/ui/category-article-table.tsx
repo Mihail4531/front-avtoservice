@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Modal } from '@/shared/ui/modal';
 import { CreateCategoryArticleForm } from '@/features/create-category-article/ui/CreateCategoryArticleForm';
 import { useDeleteCategoryArticle } from '@/entities/category-article/hooks/use-delete';
+import { useCategoryArticleById } from '@/entities/category-article/hooks/use-get-by-id';
 
 export const CategoryArticleTable = () => {
     // Используем лимит 10 по умолчанию
@@ -29,9 +30,14 @@ export const CategoryArticleTable = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     // Состояние для модального окна подтверждения удаления
     const [deleteCategoryId, setDeleteCategoryId] = useState<number | null>(null);
+    // Состояние для модального окна просмотра категории
+    const [viewCategoryId, setViewCategoryId] = useState<number | null>(null);
 
     // Хук для удаления категории
     const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategoryArticle();
+    
+    // Хук для получения данных о категории
+    const { data: categoryData, isLoading: isLoadingCategory } = useCategoryArticleById(viewCategoryId);
 
     // Расчет общего количества страниц на основе данных из Go
     const totalPages = data ? Math.ceil(data.total / 5) : 0;
@@ -62,6 +68,14 @@ export const CategoryArticleTable = () => {
 
     const handleDeleteCancel = () => {
         setDeleteCategoryId(null);
+    };
+
+    const handleViewClick = (id: number) => {
+        setViewCategoryId(id);
+    };
+
+    const handleViewClose = () => {
+        setViewCategoryId(null);
     };
 
     return (
@@ -210,6 +224,13 @@ export const CategoryArticleTable = () => {
                                     <div className="flex items-center gap-1">
                                         <button
                                             className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
+                                            title="Просмотр категории"
+                                            onClick={() => handleViewClick(category.id)}
+                                        >
+                                            <Eye className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
+                                        </button>
+                                        <button
+                                            className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
                                             title="Редактировать категорию"
                                         >
                                             <Pencil className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
@@ -325,6 +346,105 @@ export const CategoryArticleTable = () => {
                         </Button>
                     </div>
                 </div>
+            </Modal>
+
+            {/* Модальное окно просмотра категории */}
+            <Modal
+                isOpen={viewCategoryId !== null}
+                onClose={handleViewClose}
+                title="Просмотр категории"
+                className="max-w-2xl"
+            >
+                {isLoadingCategory ? (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
+                    </div>
+                ) : categoryData ? (
+                    <div className="space-y-6">
+                        <div className="flex items-start gap-4">
+                            <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                                {categoryData.image_url ? (
+                                    <img 
+                                        src={categoryData.image_url} 
+                                        alt={categoryData.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <FilePlus className="w-8 h-8 text-muted-foreground" />
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-foreground text-xl mb-2">
+                                    {categoryData.title}
+                                </h3>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className={cn(
+                                        "px-2.5 py-0.5 rounded-full text-xs font-bold uppercase border",
+                                        categoryData.is_active
+                                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+                                            : "bg-muted text-muted-foreground border-border"
+                                    )}>
+                                        {categoryData.is_active ? 'Активна' : 'Неактивна'}
+                                    </span>
+                                    <code className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                                        {categoryData.slug}
+                                    </code>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Версия: {categoryData.version}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-foreground text-sm uppercase tracking-wider">
+                                Описание
+                            </h4>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                {categoryData.description || 'Описание отсутствует'}
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-4 pt-4 border-t border-border">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Calendar className="w-3.5 h-3.5" />
+                                <span>Создана: {new Date(categoryData.created_at).toLocaleDateString('ru-RU', { 
+                                    day: 'numeric', 
+                                    month: 'long', 
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleViewClose}
+                                className="flex-1"
+                            >
+                                Закрыть
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={() => {
+                                    handleViewClose();
+                                    // Здесь можно добавить логику редактирования
+                                }}
+                                className="flex-1 bg-[var(--red)] hover:bg-red-700"
+                            >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Редактировать
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-12">
+                        <p className="text-muted-foreground">Категория не найдена</p>
+                    </div>
+                )}
             </Modal>
         </div>
     );

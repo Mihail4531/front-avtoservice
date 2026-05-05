@@ -5,6 +5,8 @@ node_modules/
 # Build artifacts
 node_modules/.tmp/
 
-# TypeScript build info
-*.tsbuildinfo
+# Environment
+.env
+.env.local
+*.env.*
 ```
