@@ -65,7 +65,7 @@ export const FileUpload = ({ value, onChange, error, disabled }: FileUploadProps
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
-            'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+            'image/*': ['.png', '.jpg', '.jpeg',  '.webp']
         },
         maxFiles: 1,
         maxSize: 5 * 1024 * 1024,
