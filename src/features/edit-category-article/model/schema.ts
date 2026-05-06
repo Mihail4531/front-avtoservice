@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 export const editCategoryArticleSchema = z.object({
-    title: z.string().trim().min(3, 'От 3 до 100 символов').max(100),
+    title: z.string().trim().min(3, 'Название должно содержать минимум 3 символа').max(100, 'Название не должно превышать 100 символов'),
     version: z.number().min(1, 'Версия должна быть больше 0'),
-    description: z.string().trim().min(3, 'От 3 до 255 символов').max(255),
+    description: z.string().trim().min(3, 'Описание должно содержать минимум 3 символа').max(255, 'Описание не должно превышать 255 символов'),
     image_path: z.union([
         z.instanceof(File),
-        z.string().min(1, 'Изображение обязательно')
+        z.string().min(1, 'Изображение обязательно для загрузки')
     ]),
     is_active: z.boolean(),
 });
