@@ -9,6 +9,7 @@ export const updateProfileSchema = z.object({
         .string()
         .email('Введите корректный email адрес')
         .max(255, 'Email слишком длинный'),
+    version: z.number().min(1, 'Версия должна быть больше 0'),
 });
 
 export type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;
