@@ -21,6 +21,19 @@ export interface CreateCategoryArticleRequest {
     image_path: string;
 }
 
+/**
+ * Тип для обновления категории статей через админку.
+ * Соответствует UpdateCategoryArticleRequest в Go-сервисе.
+ * Включает version для оптимистической блокировки.
+ */
+export interface UpdateCategoryArticleRequest {
+    title: string;
+    version: number;
+    description: string;
+    image_path: string;
+    is_active?: boolean;
+}
+
 export interface UploadResponse {
     path: string;
 }

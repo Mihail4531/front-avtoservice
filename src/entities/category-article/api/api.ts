@@ -1,8 +1,13 @@
 import { api } from '@/shared/api/api';
-import { type CreateCategoryArticleRequest, type SlugPreviewResponse } from '@/entities/category-article/model/types';
+import { type CreateCategoryArticleRequest, type SlugPreviewResponse, type UpdateCategoryArticleRequest } from '@/entities/category-article/model/types';
 
 export const createCategoryArticle = async (data: CreateCategoryArticleRequest) => {
     const response = await api.post('/dashboard/admin/categories/articles', data);
+    return response.data;
+};
+
+export const updateCategoryArticle = async (id: number, data: UpdateCategoryArticleRequest) => {
+    const response = await api.put(`/dashboard/admin/categories/articles/${id}`, data);
     return response.data;
 };
 
