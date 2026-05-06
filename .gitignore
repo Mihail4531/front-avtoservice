@@ -1,4 +1,59 @@
 ```
+# Dependencies
 node_modules/
-*.tsbuildinfo
+
+# Build artifacts
+dist/
+build/
+target/
+
+# Vite specific
+.node_build/
+.vite/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Editors
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+.env
+.env.local
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# MyPy
+.mypy_cache/
+
+# Pytest
+.pytest_cache/
+
+# Gradle
+.gradle/
+
+# OS generated
+.DS_Store
+Thumbs.db
 ```
