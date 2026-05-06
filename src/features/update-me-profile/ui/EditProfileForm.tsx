@@ -6,6 +6,7 @@ import { updateProfileSchema, type UpdateProfileSchema } from '../model/schema';
 import { useUpdateMe } from '@/entities/staff/hooks/use-update';
 import { Button } from '@/shared/ui/button';
 import { User as UserIcon, Mail } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface Props {
     initialData: UpdateProfileSchema;
@@ -15,10 +16,15 @@ interface Props {
 export const ProfileForm = ({ initialData, onSuccess }: Props) => {
     const { mutate: updateProfile, isPending } = useUpdateMe();
 
-    const { register, handleSubmit, formState: { errors } } = useForm<UpdateProfileSchema>({
+    const { register, handleSubmit, formState: { errors }, setValue } = useForm<UpdateProfileSchema>({
         resolver: zodResolver(updateProfileSchema),
         defaultValues: initialData,
     });
+
+    // Регистрация скрытого поля version для корректной работы
+    useEffect(() => {
+        register('version', { valueAsNumber: true });
+    }, [register]);
 
     const onSubmit = (data: UpdateProfileSchema) => {
         updateProfile(data, {
@@ -28,6 +34,9 @@ export const ProfileForm = ({ initialData, onSuccess }: Props) => {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Скрытое поле version */}
+            <input type="hidden" {...register('version', { valueAsNumber: true })} />
+
             <div className="space-y-5">
                 {/* Поле Имя */}
                 <div className="space-y-2">

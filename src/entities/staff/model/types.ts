@@ -5,6 +5,7 @@ export type StaffRole = typeof STAFF_ROLES[number];
 
 export interface Staff {
     id: number;
+    version: number;
     full_name: string;
     email: string;
     role: StaffRole;
@@ -26,12 +27,14 @@ export interface CreateStaffRequest {
 /**
  * Тип для обновления сотрудника через админку.
  * Соответствует UpdateRequest в Go-сервисе.
+ * Включает version для оптимистической блокировки.
  */
 export interface UpdateStaffRequest {
     full_name: string;
     email: string;
     role: StaffRole;
     is_active: boolean;
+    version: number;
 }
 
 export interface StaffListResponse {

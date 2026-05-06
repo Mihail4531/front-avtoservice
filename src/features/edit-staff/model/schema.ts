@@ -12,6 +12,7 @@ export const editStaffSchema = z.object({
         .max(255, 'Email слишком длинный'),
     role: z.enum(STAFF_ROLES),
     is_active: z.boolean(),
+    version: z.number().min(1, 'Версия должна быть больше 0'),
 });
 
 export type EditStaffSchema = z.infer<typeof editStaffSchema>;

@@ -44,6 +44,7 @@ export const EditStaffForm = ({ staff, onSuccess }: Props) => {
             email: staff.email,
             role: staff.role,
             is_active: staff.is_active,
+            version: staff.version,
         },
     });
 

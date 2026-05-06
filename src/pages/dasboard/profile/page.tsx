@@ -96,7 +96,7 @@ export const ProfilePage = () => {
                 title="Редактирование профиля"
             >
                 <ProfileForm
-                    initialData={{ full_name: user.full_name, email: user.email }}
+                    initialData={{ full_name: user.full_name, email: user.email, version: user.version }}
                     onSuccess={() => setIsModalOpen(false)}
                 />
             </Modal>
