@@ -39,8 +39,10 @@ export const CategoryArticleTable = () => {
     // Хук для удаления категории
     const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategoryArticle();
 
-    // Хук для получения данных о категории
-    const { data: categoryData, isLoading: isLoadingCategory } = useCategoryArticleById(viewCategoryId);
+    // Хук для получения данных о категории (используется только для просмотра)
+    const { data: viewCategoryData, isLoading: isLoadingViewCategory } = useCategoryArticleById(viewCategoryId);
+    // Хук для получения данных о категории (используется только для редактирования)
+    const { data: editCategoryData, isLoading: isLoadingEditCategory } = useCategoryArticleById(editCategoryId);
 
     // Расчет общего количества страниц на основе данных из Go
     const totalPages = data ? Math.ceil(data.total / 5) : 0;
@@ -83,7 +85,6 @@ export const CategoryArticleTable = () => {
 
     const handleEditClick = (id: number) => {
         setEditCategoryId(id);
-        setViewCategoryId(id); // Устанавливаем viewCategoryId для загрузки данных категории
     };
 
     const handleEditClose = () => {
@@ -364,18 +365,18 @@ export const CategoryArticleTable = () => {
                 title="Просмотр категории"
                 className="max-w-2xl"
             >
-                {isLoadingCategory ? (
+                {isLoadingViewCategory ? (
                     <div className="flex items-center justify-center py-12">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
                     </div>
-                ) : categoryData ? (
+                ) : viewCategoryData ? (
                     <div className="space-y-6">
                         <div className="flex items-start gap-4">
                             <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                                {categoryData.image_url ? (
+                                {viewCategoryData.image_url ? (
                                     <img
-                                        src={categoryData.image_url}
-                                        alt={categoryData.title}
+                                        src={viewCategoryData.image_url}
+                                        alt={viewCategoryData.title}
                                         className="w-full h-full object-cover"
                                     />
                                 ) : (
@@ -384,23 +385,23 @@ export const CategoryArticleTable = () => {
                             </div>
                             <div className="flex-1">
                                 <h3 className="font-bold text-foreground text-xl mb-2">
-                                    {categoryData.title}
+                                    {viewCategoryData.title}
                                 </h3>
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className={cn(
                                         "px-2.5 py-0.5 rounded-full text-xs font-bold uppercase border",
-                                        categoryData.is_active
+                                        viewCategoryData.is_active
                                             ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
                                             : "bg-muted text-muted-foreground border-border"
                                     )}>
-                                        {categoryData.is_active ? 'Активна' : 'Неактивна'}
+                                        {viewCategoryData.is_active ? 'Активна' : 'Неактивна'}
                                     </span>
                                     <code className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded">
-                                        {categoryData.slug}
+                                        {viewCategoryData.slug}
                                     </code>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Версия: {categoryData.version}
+                                    Версия: {viewCategoryData.version}
                                 </p>
                             </div>
                         </div>
@@ -410,14 +411,14 @@ export const CategoryArticleTable = () => {
                                 Описание
                             </h4>
                             <p className="text-sm text-muted-foreground leading-relaxed">
-                                {categoryData.description || 'Описание отсутствует'}
+                                {viewCategoryData.description || 'Описание отсутствует'}
                             </p>
                         </div>
 
                         <div className="flex items-center gap-4 pt-4 border-t border-border">
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Calendar className="w-3.5 h-3.5" />
-                                <span>Создана: {new Date(categoryData.created_at).toLocaleDateString('ru-RU', {
+                                <span>Создана: {new Date(viewCategoryData.created_at).toLocaleDateString('ru-RU', {
                                     day: 'numeric',
                                     month: 'long',
                                     year: 'numeric',
@@ -440,7 +441,7 @@ export const CategoryArticleTable = () => {
                                 type="button"
                                 onClick={() => {
                                     handleViewClose();
-                                    handleEditClick(categoryData.id);
+                                    handleEditClick(viewCategoryData.id);
                                 }}
                                 className="flex-1 bg-[var(--red)] hover:bg-red-700"
                             >
@@ -463,12 +464,12 @@ export const CategoryArticleTable = () => {
                 title="Редактировать категорию статей"
                 className="max-w-xl"
             >
-                {isLoadingCategory ? (
+                {isLoadingEditCategory ? (
                     <div className="flex items-center justify-center py-12">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
                     </div>
-                ) : categoryData ? (
-                    <EditCategoryArticleForm category={categoryData} onSuccess={handleEditSuccess} />
+                ) : editCategoryData ? (
+                    <EditCategoryArticleForm category={editCategoryData} onSuccess={handleEditSuccess} />
                 ) : (
                     <div className="text-center py-12">
                         <p className="text-muted-foreground">Категория не найдена</p>
