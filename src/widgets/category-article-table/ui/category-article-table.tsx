@@ -1,13 +1,14 @@
 'use client';
 
 import { useCategoryArticleList } from '@/features/category-article-list/model/use-category-article-list';
-import { Search, FilePlus, ChevronLeft, ChevronRight, Calendar, Pencil, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Search, FilePlus, ChevronLeft, ChevronRight, Calendar, Pencil, Eye, Trash2 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/lib/cn';
 import { useState } from 'react';
 import { Modal } from '@/shared/ui/modal';
 import { CreateCategoryArticleForm } from '@/features/create-category-article/ui/CreateCategoryArticleForm';
+import { EditCategoryArticleForm } from '@/features/edit-category-article/ui/EditCategoryArticleForm';
 import { useDeleteCategoryArticle } from '@/entities/category-article/hooks/use-delete';
 import { useCategoryArticleById } from '@/entities/category-article/hooks/use-get-by-id';
 
@@ -32,6 +33,8 @@ export const CategoryArticleTable = () => {
     const [deleteCategoryId, setDeleteCategoryId] = useState<number | null>(null);
     // Состояние для модального окна просмотра категории
     const [viewCategoryId, setViewCategoryId] = useState<number | null>(null);
+    // Состояние для модального окна редактирования категории
+    const [editCategoryId, setEditCategoryId] = useState<number | null>(null);
 
     // Хук для удаления категории
     const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategoryArticle();
@@ -76,6 +79,19 @@ export const CategoryArticleTable = () => {
 
     const handleViewClose = () => {
         setViewCategoryId(null);
+    };
+
+    const handleEditClick = (id: number) => {
+        setEditCategoryId(id);
+    };
+
+    const handleEditClose = () => {
+        setEditCategoryId(null);
+    };
+
+    const handleEditSuccess = () => {
+        setEditCategoryId(null);
+        refresh();
     };
 
     return (
@@ -232,6 +248,7 @@ export const CategoryArticleTable = () => {
                                         <button
                                             className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
                                             title="Редактировать категорию"
+                                            onClick={() => handleEditClick(category.id)}
                                         >
                                             <Pencil className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
                                         </button>
@@ -422,7 +439,7 @@ export const CategoryArticleTable = () => {
                                 type="button"
                                 onClick={() => {
                                     handleViewClose();
-                                    // Здесь можно добавить логику редактирования
+                                    handleEditClick(categoryData.id);
                                 }}
                                 className="flex-1 bg-[var(--red)] hover:bg-red-700"
                             >
@@ -436,6 +453,30 @@ export const CategoryArticleTable = () => {
                         <p className="text-muted-foreground">Категория не найдена</p>
                     </div>
                 )}
+            </Modal>
+
+            {/* Модальное окно редактирования категории */}
+            <Modal
+                isOpen={editCategoryId !== null}
+                onClose={handleEditClose}
+                title="Редактировать категорию статей"
+                className="max-w-xl"
+            >
+                {(() => {
+                    const categoryToEdit = viewCategoryId === editCategoryId && categoryData 
+                        ? categoryData 
+                        : null;
+                    
+                    if (!categoryToEdit) {
+                        return (
+                            <div className="flex items-center justify-center py-12">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
+                            </div>
+                        );
+                    }
+                    
+                    return <EditCategoryArticleForm category={categoryToEdit} onSuccess={handleEditSuccess} />;
+                })()}
             </Modal>
         </div>
     );
