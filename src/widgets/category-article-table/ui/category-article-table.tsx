@@ -35,7 +35,7 @@ export const CategoryArticleTable = () => {
 
     // Хук для удаления категории
     const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategoryArticle();
-    
+
     // Хук для получения данных о категории
     const { data: categoryData, isLoading: isLoadingCategory } = useCategoryArticleById(viewCategoryId);
 
@@ -156,7 +156,7 @@ export const CategoryArticleTable = () => {
                         {/* Кнопка сброса фильтров */}
                         {(filters.search || filters.created_at_from || filters.created_at_to || filters.is_active !== undefined) && (
                             <button
-                                onClick={() => setFilters({ search: '', is_active: undefined,  created_at_from: '', created_at_to: '', page: 0 })}
+                                onClick={() => setFilters({ search: '', is_active: undefined, created_at_from: '', created_at_to: '', page: 0 })}
                                 className="px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             >
                                 Сбросить
@@ -187,8 +187,8 @@ export const CategoryArticleTable = () => {
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
                                             {category.image_url ? (
-                                                <img 
-                                                    src={category.image_url} 
+                                                <img
+                                                    src={category.image_url}
                                                     alt={category.title}
                                                     className="w-full h-full object-cover"
                                                 />
@@ -235,16 +235,7 @@ export const CategoryArticleTable = () => {
                                         >
                                             <Pencil className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
                                         </button>
-                                        <button
-                                            className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
-                                            title={category.is_active ? 'Деактивировать' : 'Активировать'}
-                                        >
-                                            {category.is_active ? (
-                                                <EyeOff className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
-                                            ) : (
-                                                <Eye className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
-                                            )}
-                                        </button>
+
                                         <button
                                             className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
                                             title="Удалить категорию"
@@ -364,8 +355,8 @@ export const CategoryArticleTable = () => {
                         <div className="flex items-start gap-4">
                             <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0">
                                 {categoryData.image_url ? (
-                                    <img 
-                                        src={categoryData.image_url} 
+                                    <img
+                                        src={categoryData.image_url}
                                         alt={categoryData.title}
                                         className="w-full h-full object-cover"
                                     />
@@ -408,9 +399,9 @@ export const CategoryArticleTable = () => {
                         <div className="flex items-center gap-4 pt-4 border-t border-border">
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Calendar className="w-3.5 h-3.5" />
-                                <span>Создана: {new Date(categoryData.created_at).toLocaleDateString('ru-RU', { 
-                                    day: 'numeric', 
-                                    month: 'long', 
+                                <span>Создана: {new Date(categoryData.created_at).toLocaleDateString('ru-RU', {
+                                    day: 'numeric',
+                                    month: 'long',
                                     year: 'numeric',
                                     hour: '2-digit',
                                     minute: '2-digit'
