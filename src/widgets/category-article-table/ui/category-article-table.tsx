@@ -83,6 +83,7 @@ export const CategoryArticleTable = () => {
 
     const handleEditClick = (id: number) => {
         setEditCategoryId(id);
+        setViewCategoryId(id); // Устанавливаем viewCategoryId для загрузки данных категории
     };
 
     const handleEditClose = () => {
@@ -462,21 +463,17 @@ export const CategoryArticleTable = () => {
                 title="Редактировать категорию статей"
                 className="max-w-xl"
             >
-                {(() => {
-                    const categoryToEdit = viewCategoryId === editCategoryId && categoryData 
-                        ? categoryData 
-                        : null;
-                    
-                    if (!categoryToEdit) {
-                        return (
-                            <div className="flex items-center justify-center py-12">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
-                            </div>
-                        );
-                    }
-                    
-                    return <EditCategoryArticleForm category={categoryToEdit} onSuccess={handleEditSuccess} />;
-                })()}
+                {isLoadingCategory ? (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
+                    </div>
+                ) : categoryData ? (
+                    <EditCategoryArticleForm category={categoryData} onSuccess={handleEditSuccess} />
+                ) : (
+                    <div className="text-center py-12">
+                        <p className="text-muted-foreground">Категория не найдена</p>
+                    </div>
+                )}
             </Modal>
         </div>
     );

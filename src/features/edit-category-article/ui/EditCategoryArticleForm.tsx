@@ -25,7 +25,7 @@ export const EditCategoryArticleForm = ({ category, onSuccess }: Props) => {
 
     const isPending = isUpdating || isUploadingImage;
 
-    const { register, handleSubmit, formState: { errors }, watch, control } = useForm<EditCategoryArticleSchema>({
+    const { register, handleSubmit, formState: { errors }, watch, control, setValue } = useForm<EditCategoryArticleSchema>({
         resolver: zodResolver(editCategoryArticleSchema),
         defaultValues: {
             title: category.title,
@@ -219,7 +219,7 @@ export const EditCategoryArticleForm = ({ category, onSuccess }: Props) => {
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
-                            onClick={() => control._formValues.is_active = true}
+                            onClick={() => setValue('is_active', true)}
                             className={cn(
                                 "flex items-center gap-2 px-4 py-3 rounded-xl border transition-all font-bold",
                                 isActive === true
@@ -232,7 +232,7 @@ export const EditCategoryArticleForm = ({ category, onSuccess }: Props) => {
                         </button>
                         <button
                             type="button"
-                            onClick={() => control._formValues.is_active = false}
+                            onClick={() => setValue('is_active', false)}
                             className={cn(
                                 "flex items-center gap-2 px-4 py-3 rounded-xl border transition-all font-bold",
                                 isActive === false
