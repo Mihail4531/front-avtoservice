@@ -56,6 +56,7 @@ export const AppRouter = () => {
                             <Route path="profile" element={<ProfilePage />} />
                             <Route path="admin/staff" element={<StaffPage />} />
                             <Route path="admin/categories/articles" element={<CategoryArticlesPage />} />
+                            <Route path="admin/articles" element={<ArticlesPage />} />
                             <Route path="settings" element={<SettingsPage />} />
                         </Route>
 
