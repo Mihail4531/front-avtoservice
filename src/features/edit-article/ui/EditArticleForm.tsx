@@ -52,18 +52,18 @@ export const EditArticleForm = ({ articleId, article, onSuccess }: Props) => {
             content: article.content,
             image_path: extractRelativePath(article.image_url),
             is_active: article.is_active,
-            is_popular: article.is_popular || false,
+       
         },
     });
 
     const title = watch('title');
     const isActive = watch('is_active');
-    const isPopular = watch('is_popular');
+  
 
     // Регистрация скрытых полей для корректной работы watch/setValue
     useEffect(() => {
         register('is_active');
-        register('is_popular');
+
     }, [register]);
 
     // Превью slug с debounce
@@ -120,7 +120,7 @@ export const EditArticleForm = ({ articleId, article, onSuccess }: Props) => {
                     content: data.content,
                     image_path: imagePath,
                     is_active: data.is_active,
-                    is_popular: data.is_popular,
+                 
                 },
             },
             {
@@ -316,40 +316,7 @@ export const EditArticleForm = ({ articleId, article, onSuccess }: Props) => {
             </div>
 
             {/* Популярная статья */}
-            <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
-                    Популярность
-                </label>
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={() => setValue('is_popular', true, { shouldDirty: true })}
-                        disabled={isPending}
-                        className={cn(
-                            'flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all font-bold text-xs flex-1 justify-center',
-                            isPopular
-                                ? 'bg-yellow-50 border-yellow-200 text-yellow-600 dark:bg-yellow-900/20 dark:border-yellow-800'
-                                : 'bg-card border-border text-muted-foreground'
-                        )}
-                    >
-                        <Star className="w-4 h-4" />
-                        Популярная
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setValue('is_popular', false, { shouldDirty: true })}
-                        disabled={isPending}
-                        className={cn(
-                            'flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all font-bold text-xs flex-1 justify-center',
-                            !isPopular
-                                ? 'bg-card border-border text-muted-foreground'
-                                : 'bg-card border-border text-muted-foreground'
-                        )}
-                    >
-                        Обычная
-                    </button>
-                </div>
-            </div>
+            
 
             {error && (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl p-3">

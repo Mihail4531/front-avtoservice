@@ -35,7 +35,7 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
             description: '',
             content: '',
             image_path: undefined,
-            is_popular: false,
+          
         },
     });
 
@@ -98,7 +98,7 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
                 description: data.description,
                 content: data.content,
                 image_path: imagePath,
-                is_popular: data.is_popular,
+               
             },
             {
                 onSuccess: () => onSuccess?.(),
@@ -270,40 +270,7 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
                     )}
                 </div>
 
-                {/* Популярная статья */}
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
-                        Статус популярности
-                    </label>
-                    <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => setValue('is_popular', true)}
-                            disabled={isPending}
-                            className={cn(
-                                'flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all font-bold text-xs flex-1 justify-center',
-                                watch('is_popular')
-                                    ? 'bg-green-50 border-green-200 text-green-600 dark:bg-green-900/20 dark:border-green-800'
-                                    : 'bg-card border-border text-muted-foreground'
-                            )}
-                        >
-                            Популярная
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setValue('is_popular', false)}
-                            disabled={isPending}
-                            className={cn(
-                                'flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all font-bold text-xs flex-1 justify-center',
-                                !watch('is_popular')
-                                    ? 'bg-card border-border text-muted-foreground'
-                                    : 'bg-card border-border text-muted-foreground'
-                            )}
-                        >
-                            Обычная
-                        </button>
-                    </div>
-                </div>
+               
             </div>
 
             {error && (

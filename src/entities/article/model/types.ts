@@ -16,7 +16,7 @@ export interface Article {
     content: string;
     image_url: string;
     is_active: boolean;
-    is_popular?: boolean;
+ 
     published_at?: string;
     created_at: string;
 }
@@ -31,7 +31,7 @@ export interface CreateArticleRequest {
     description: string;
     content: string;
     image_path: string;
-    is_popular?: boolean;
+
 }
 
 /**
@@ -47,7 +47,7 @@ export interface UpdateArticleRequest {
     content: string;
     image_path: string;
     is_active?: boolean;
-    is_popular?: boolean;
+
 }
 
 export interface UploadResponse {

@@ -56,7 +56,7 @@ export const ArticleTable = () => {
     // Хук для получения данных о статье (используется только для просмотра)
     const { data: viewArticleData, isLoading: isLoadingViewArticle } = useArticleById(viewArticleId);
     // Хук для получения данных о статье (используется только для редактирования)
-    const { data: editArticleData, isLoading: isLoadingEditArticle } = useArticleById(editArticleId);
+   
 
     // Расчет общего количества страниц на основе данных из Go
     const totalPages = data ? Math.ceil(data.total / 5) : 0;
@@ -462,31 +462,7 @@ export const ArticleTable = () => {
                 )}
             </Modal>
 
-            {/* Модальное окно редактирования статьи */}
-            <Modal
-                isOpen={editArticleId !== null}
-                onClose={handleEditClose}
-                title="Редактировать статью"
-                className="max-w-3xl"
-            >
-                {isLoadingEditArticle ? (
-                    <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
-                    </div>
-                ) : editArticleData ? (
-                    <div className="max-h-[70vh] overflow-y-auto pr-2">
-                        <EditArticleForm 
-                            articleId={editArticleId} 
-                            article={editArticleData}
-                            onSuccess={handleEditSuccess} 
-                        />
-                    </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                        Статья не найдена
-                    </p>
-                )}
-            </Modal>
+           
         </div>
     );
 };
