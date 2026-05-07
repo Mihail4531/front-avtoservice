@@ -1,12 +1,3 @@
-```
-# Dependencies
-node_modules/
+```ts
 
-# Build artifacts
-node_modules/.tmp/
-
-# Environment
-.env
-.env.local
-.env.*
 ```
