@@ -8,7 +8,6 @@ import { cn } from '@/shared/lib/cn';
 import { useState } from 'react';
 import { Modal } from '@/shared/ui/modal';
 import { CreateArticleForm } from '@/features/create-article/ui/CreateArticleForm';
-import { EditArticleForm } from '@/features/edit-article/ui/EditArticleForm';
 import { useDeleteArticle } from '@/entities/article/hooks/use-delete';
 import { useArticleById } from '@/entities/article/hooks/use-get-by-id';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
@@ -47,16 +46,12 @@ export const ArticleTable = () => {
     const [deleteArticleId, setDeleteArticleId] = useState<number | null>(null);
     // Состояние для модального окна просмотра статьи
     const [viewArticleId, setViewArticleId] = useState<number | null>(null);
-    // Состояние для модального окна редактирования статьи
-    const [editArticleId, setEditArticleId] = useState<number | null>(null);
 
     // Хук для удаления статьи
     const { mutate: deleteArticle, isPending: isDeleting } = useDeleteArticle();
 
     // Хук для получения данных о статье (используется только для просмотра)
     const { data: viewArticleData, isLoading: isLoadingViewArticle } = useArticleById(viewArticleId);
-    // Хук для получения данных о статье (используется только для редактирования)
-   
 
     // Расчет общего количества страниц на основе данных из Go
     const totalPages = data ? Math.ceil(data.total / 5) : 0;
@@ -95,19 +90,6 @@ export const ArticleTable = () => {
 
     const handleViewClose = () => {
         setViewArticleId(null);
-    };
-
-    const handleEditClick = (id: number) => {
-        setEditArticleId(id);
-    };
-
-    const handleEditClose = () => {
-        setEditArticleId(null);
-    };
-
-    const handleEditSuccess = () => {
-        setEditArticleId(null);
-        refresh();
     };
 
     return (

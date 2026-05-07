@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createArticleSchema, type CreateArticleSchema } from '../model/schema';
 import { useCreateArticle } from '@/entities/article/hooks/use-create';
 import { Button } from '@/shared/ui/button';
-import { Type, FileText, Tag } from 'lucide-react';
+import { Type, FileText } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { useState, useEffect } from 'react';
 import { previewSlug, uploadFile } from '@/entities/article/api/api';
@@ -27,7 +27,7 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
 
     const isPending = isCreating || isUploadingImage;
 
-    const { register, handleSubmit, formState: { errors }, watch, control, setValue } = useForm<CreateArticleSchema>({
+    const { register, handleSubmit, formState: { errors }, watch, control } = useForm<CreateArticleSchema>({
         resolver: zodResolver(createArticleSchema),
         defaultValues: {
             category_id: 0,
@@ -42,17 +42,13 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
     const title = watch('title');
 
     // Загрузка категорий для селекта
-    const { data: categoriesData } = useQuery({
+    const { data: categoriesData, status } = useQuery({
         queryKey: ['admin-category-articles-list'],
         queryFn: () => getCategoryArticlesList({ limit: 1000 }),
         enabled: true,
     });
 
-    console.log('🔵 RENDER. status:', status, 'data:', categoriesData);
-
     const categories = categoriesData?.items || [];
-
-    console.log('🔵 categories.length:', categories.length, categories)
     useEffect(() => {
         if (!title || title.length < 3) {
             setPreviewSlugValue('');

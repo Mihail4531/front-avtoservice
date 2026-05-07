@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { editArticleSchema, type EditArticleSchema } from '../model/schema';
 import { useUpdateArticle } from '@/entities/article/hooks/use-update';
 import { Button } from '@/shared/ui/button';
-import { Type, FileText, Tag, Eye, EyeOff, Star } from 'lucide-react';
+import { Type, FileText, Tag, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { useState, useEffect } from 'react';
 import { previewSlug, uploadFile } from '@/entities/article/api/api';
