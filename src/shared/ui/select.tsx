@@ -9,6 +9,7 @@ import {
     useRef,
     useState,
     useMemo,
+    useCallback,
     type ButtonHTMLAttributes,
     type ReactNode,
 } from 'react';
@@ -175,20 +176,20 @@ export const SelectContent = ({ className, children }: SelectContentProps) => {
     const { open, contentId } = useSelect();
     const [labels, setLabels] = useState<Record<string, ReactNode>>({});
 
-    const register = (value: string, label: ReactNode) => {
+    const register = useCallback((value: string, label: ReactNode) => {
         setLabels((prev) => {
             if (prev[value] === label) return prev;
             return { ...prev, [value]: label };
         });
-    };
+    }, []);
 
-    const unregister = (value: string) => {
+    const unregister = useCallback((value: string) => {
         setLabels((prev) => {
             if (!(value in prev)) return prev;
             const { [value]: _, ...rest } = prev;
             return rest;
         });
-    };
+    }, []);
 
     // Мемоизируем значение контекста, чтобы избежать лишних ререндеров
     const registryValue = useMemo(() => ({ labels, register, unregister }), [labels, register, unregister]);
@@ -233,9 +234,6 @@ export const SelectItem = ({ value, children, className, disabled }: SelectItemP
         return () => registry?.unregister(value);
     }, [value, children, registry]);
 
-    // Мемоизируем children для предотвращения бесконечного цикла обновлений
-    const memoizedChildren = useMemo(() => children, [children]);
-
     return (
         <button
             type="button"
@@ -253,7 +251,7 @@ export const SelectItem = ({ value, children, className, disabled }: SelectItemP
                 className
             )}
         >
-            <span className="truncate text-left flex-1">{memoizedChildren}</span>
+            <span className="truncate text-left flex-1">{children}</span>
             {isSelected && <Check className="absolute right-2.5 w-4 h-4" />}
         </button>
     );
