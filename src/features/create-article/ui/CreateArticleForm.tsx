@@ -10,6 +10,10 @@ import { cn } from '@/shared/lib/cn';
 import { useState, useEffect } from 'react';
 import { previewSlug, uploadFile } from '@/entities/article/api/api';
 import { FileUpload } from '@/shared/ui/file-upload';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import { useQuery } from '@tanstack/react-query';
+import type { CategoryShortResponse } from '@/entities/article/model/types';
+import { getCategoryArticlesList } from '@/entities/category-article/api/api';
 
 interface Props {
     onSuccess?: () => void;
@@ -36,6 +40,15 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
     });
 
     const title = watch('title');
+
+    // Загрузка категорий для селекта
+    const { data: categoriesData } = useQuery({
+        queryKey: ['admin-category-articles-list'],
+        queryFn: () => getCategoryArticlesList({ limit: 1000 }),
+        enabled: true,
+    });
+
+    const categories = categoriesData?.items || [];
 
     useEffect(() => {
         if (!title || title.length < 3) {
@@ -102,24 +115,33 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
             </div>
 
             <div className="space-y-5">
-                {/* Поле Категория */}
+                {/* Поле Категория - ВЫПАДАЮЩИЙ СПИСОК */}
                 <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                         Категория
                     </label>
-                    <div className="relative">
-                        <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input
-                            {...register('category_id', { valueAsNumber: true })}
-                            type="number"
-                            placeholder="Например: 1"
-                            disabled={isPending}
-                            className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground",
-                                errors.category_id ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
-                            )}
-                        />
-                    </div>
+                    <Controller
+                        name="category_id"
+                        control={control}
+                        rules={{ required: 'Выберите категорию', min: { value: 1, message: 'Выберите категорию' } }}
+                        render={({ field }) => (
+                            <Select onValueChange={(val) => field.onChange(Number(val))} value={field.value ? String(field.value) : ''}>
+                                <SelectTrigger className={cn(
+                                    "w-full",
+                                    errors.category_id ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
+                                )}>
+                                    <SelectValue placeholder="Выберите категорию" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.map((cat: CategoryShortResponse) => (
+                                        <SelectItem key={cat.id} value={String(cat.id)}>
+                                            {cat.title}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    />
                     {errors.category_id && (
                         <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
                             {errors.category_id.message}

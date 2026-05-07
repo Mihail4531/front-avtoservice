@@ -1,5 +1,5 @@
 import { api } from '@/shared/api/api';
-import { type CreateCategoryArticleRequest, type SlugPreviewResponse, type UpdateCategoryArticleRequest } from '@/entities/category-article/model/types';
+import { type CreateCategoryArticleRequest, type SlugPreviewResponse, type UpdateCategoryArticleRequest, type CategoryArticleListResponse, type CategoryArticleFilters } from '@/entities/category-article/model/types';
 
 export const createCategoryArticle = async (data: CreateCategoryArticleRequest) => {
     const response = await api.post('/dashboard/admin/categories/articles', data);
@@ -18,6 +18,13 @@ export const deleteCategoryArticle = async (id: number) => {
 
 export const getCategoryArticleById = async (id: number) => {
     const response = await api.get(`/dashboard/admin/categories/articles/${id}`);
+    return response.data;
+};
+
+export const getCategoryArticlesList = async (filters?: CategoryArticleFilters): Promise<CategoryArticleListResponse> => {
+    const response = await api.get<CategoryArticleListResponse>('/dashboard/admin/categories/articles', {
+        params: filters
+    });
     return response.data;
 };
 
