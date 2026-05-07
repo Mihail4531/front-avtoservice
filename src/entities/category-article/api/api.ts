@@ -29,7 +29,7 @@ export const getCategoryArticlesList = async (filters?: CategoryArticleFilters):
 };
 
 export const previewSlug = async (title: string): Promise<SlugPreviewResponse> => {
-    const response = await api.get<SlugPreviewResponse>('/dashboard/admin/categories/articles/slug-preview', {
+    const response = await api.get<SlugPreviewResponse>('/dashboard/admin/slug-preview', {
         params: { title }
     });
     return response.data;

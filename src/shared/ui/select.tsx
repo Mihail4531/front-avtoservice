@@ -1,15 +1,15 @@
 'use client';
 
 import {
+    Children,
     createContext,
     forwardRef,
+    isValidElement,
     useContext,
     useEffect,
     useId,
     useRef,
     useState,
-    useMemo,
-    useCallback,
     type ButtonHTMLAttributes,
     type ReactNode,
 } from 'react';
@@ -33,18 +33,20 @@ function useSelect() {
     return ctx;
 }
 
+// Контекст для SelectValue — содержит дерево children из SelectContent
+const SelectChildrenContext = createContext<ReactNode>(null);
+
 interface SelectProps {
     value?: string;
     onValueChange?: (value: string) => void;
     defaultValue?: string;
     children: ReactNode;
-    
 }
 
 export const Select = ({ value, onValueChange, defaultValue, children }: SelectProps) => {
     const [internalValue, setInternalValue] = useState(defaultValue ?? '');
     const [open, setOpen] = useState(false);
-    const triggerRef = useRef<HTMLButtonElement>(null);
+    const triggerRef = useRef<HTMLButtonElement | null>(null);
     const contentId = useId();
 
     const isControlled = value !== undefined;
@@ -56,7 +58,6 @@ export const Select = ({ value, onValueChange, defaultValue, children }: SelectP
         setOpen(false);
     };
 
-    // Закрытие по клику снаружи
     useEffect(() => {
         if (!open) return;
 
@@ -142,12 +143,37 @@ interface SelectValueProps {
     className?: string;
 }
 
+// Ищет SelectItem по value среди children и возвращает его label
+function findLabel(children: ReactNode, targetValue: string): ReactNode | null {
+    let found: ReactNode | null = null;
+
+    Children.forEach(children, (child) => {
+        if (found !== null) return;
+        if (!isValidElement(child)) return;
+
+        const props = child.props as { value?: string; children?: ReactNode };
+        if (props.value === targetValue) {
+            found = props.children ?? null;
+            return;
+        }
+
+        // Рекурсивно ищем во вложенных (на случай группировки)
+        if (props.children) {
+            const nested = findLabel(props.children, targetValue);
+            if (nested !== null) found = nested;
+        }
+    });
+
+    return found;
+}
+
 export const SelectValue = ({ placeholder, className }: SelectValueProps) => {
     const { value } = useSelect();
-    const ctx = useContext(SelectItemRegistryContext);
-    const label = ctx?.labels[value];
+    const childrenTree = useContext(SelectChildrenContext);
 
-    if (!value || !label) {
+    const label = value ? findLabel(childrenTree, value) : null;
+
+    if (!value || label === null) {
         return (
             <span className={cn('text-muted-foreground font-medium', className)}>
                 {placeholder ?? 'Выберите...'}
@@ -158,15 +184,6 @@ export const SelectValue = ({ placeholder, className }: SelectValueProps) => {
     return <span className={cn('truncate', className)}>{label}</span>;
 };
 
-// Реестр label-ов от <SelectItem>, чтобы <SelectValue> знал, что показывать
-interface ItemRegistry {
-    labels: Record<string, ReactNode>;
-    register: (value: string, label: ReactNode) => void;
-    unregister: (value: string) => void;
-}
-
-const SelectItemRegistryContext = createContext<ItemRegistry | null>(null);
-
 interface SelectContentProps {
     className?: string;
     children: ReactNode;
@@ -174,28 +191,9 @@ interface SelectContentProps {
 
 export const SelectContent = ({ className, children }: SelectContentProps) => {
     const { open, contentId } = useSelect();
-    const [labels, setLabels] = useState<Record<string, ReactNode>>({});
-
-    const register = useCallback((value: string, label: ReactNode) => {
-        setLabels((prev) => {
-            if (prev[value] === label) return prev;
-            return { ...prev, [value]: label };
-        });
-    }, []);
-
-    const unregister = useCallback((value: string) => {
-        setLabels((prev) => {
-            if (!(value in prev)) return prev;
-            const { [value]: _, ...rest } = prev;
-            return rest;
-        });
-    }, []);
-
-    // Мемоизируем значение контекста, чтобы избежать лишних ререндеров
-    const registryValue = useMemo(() => ({ labels, register, unregister }), [labels, register, unregister]);
 
     return (
-        <SelectItemRegistryContext.Provider value={registryValue}>
+        <SelectChildrenContext.Provider value={children}>
             {open && (
                 <div
                     id={contentId}
@@ -204,16 +202,14 @@ export const SelectContent = ({ className, children }: SelectContentProps) => {
                         'absolute left-0 right-0 top-full z-50 mt-1.5',
                         'max-h-60 overflow-y-auto',
                         'rounded-xl border border-border bg-card shadow-lg',
-                        'p-1 animate-in fade-in-0 zoom-in-95',
+                        'p-1',
                         className
                     )}
                 >
                     {children}
                 </div>
             )}
-            {/* Скрытая регистрация — даже когда контент закрыт, мы знаем labels */}
-            {!open && <div className="hidden">{children}</div>}
-        </SelectItemRegistryContext.Provider>
+        </SelectChildrenContext.Provider>
     );
 };
 
@@ -226,13 +222,7 @@ interface SelectItemProps {
 
 export const SelectItem = ({ value, children, className, disabled }: SelectItemProps) => {
     const { value: selectedValue, onValueChange } = useSelect();
-    const registry = useContext(SelectItemRegistryContext);
     const isSelected = selectedValue === value;
-
-    useEffect(() => {
-        registry?.register(value, children);
-        return () => registry?.unregister(value);
-    }, [value, children, registry]);
 
     return (
         <button

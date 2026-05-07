@@ -48,8 +48,11 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
         enabled: true,
     });
 
+    console.log('🔵 RENDER. status:', status, 'data:', categoriesData);
+
     const categories = categoriesData?.items || [];
 
+    console.log('🔵 categories.length:', categories.length, categories)
     useEffect(() => {
         if (!title || title.length < 3) {
             setPreviewSlugValue('');
