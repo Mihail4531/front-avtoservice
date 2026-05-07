@@ -8,6 +8,7 @@ import {
     useId,
     useRef,
     useState,
+    useMemo,
     type ButtonHTMLAttributes,
     type ReactNode,
 } from 'react';
@@ -189,8 +190,11 @@ export const SelectContent = ({ className, children }: SelectContentProps) => {
         });
     };
 
+    // Мемоизируем значение контекста, чтобы избежать лишних ререндеров
+    const registryValue = useMemo(() => ({ labels, register, unregister }), [labels, register, unregister]);
+
     return (
-        <SelectItemRegistryContext.Provider value={{ labels, register, unregister }}>
+        <SelectItemRegistryContext.Provider value={registryValue}>
             {open && (
                 <div
                     id={contentId}
@@ -229,6 +233,9 @@ export const SelectItem = ({ value, children, className, disabled }: SelectItemP
         return () => registry?.unregister(value);
     }, [value, children, registry]);
 
+    // Мемоизируем children для предотвращения бесконечного цикла обновлений
+    const memoizedChildren = useMemo(() => children, [children]);
+
     return (
         <button
             type="button"
@@ -246,7 +253,7 @@ export const SelectItem = ({ value, children, className, disabled }: SelectItemP
                 className
             )}
         >
-            <span className="truncate text-left flex-1">{children}</span>
+            <span className="truncate text-left flex-1">{memoizedChildren}</span>
             {isSelected && <Check className="absolute right-2.5 w-4 h-4" />}
         </button>
     );
