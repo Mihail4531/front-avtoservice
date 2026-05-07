@@ -16,6 +16,7 @@ export interface Article {
     content: string;
     image_url: string;
     is_active: boolean;
+    is_popular?: boolean;
     published_at?: string;
     created_at: string;
 }

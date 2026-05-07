@@ -29,6 +29,7 @@ const menuItems = [
     {
         group: 'СТАТЬИ', items: [
             { name: 'Категории статей', icon: BookOpen, path: '/dashboard/admin/categories/articles' },
+            { name: 'Все статьи', icon: BookOpen, path: '/dashboard/admin/articles' },
         ]
     }
 ];

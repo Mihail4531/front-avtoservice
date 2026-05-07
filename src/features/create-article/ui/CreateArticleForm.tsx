@@ -23,7 +23,7 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
 
     const isPending = isCreating || isUploadingImage;
 
-    const { register, handleSubmit, formState: { errors }, watch, control } = useForm<CreateArticleSchema>({
+    const { register, handleSubmit, formState: { errors }, watch, control, setValue } = useForm<CreateArticleSchema>({
         resolver: zodResolver(createArticleSchema),
         defaultValues: {
             category_id: 0,
@@ -36,7 +36,6 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
     });
 
     const title = watch('title');
-    const categoryId = watch('category_id');
 
     useEffect(() => {
         if (!title || title.length < 3) {
@@ -257,7 +256,7 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
-                            onClick={() => control._fields.is_popular?.onChange?.(true)}
+                            onClick={() => setValue('is_popular', true)}
                             disabled={isPending}
                             className={cn(
                                 'flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all font-bold text-xs flex-1 justify-center',
@@ -270,7 +269,7 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
                         </button>
                         <button
                             type="button"
-                            onClick={() => control._fields.is_popular?.onChange?.(false)}
+                            onClick={() => setValue('is_popular', false)}
                             disabled={isPending}
                             className={cn(
                                 'flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all font-bold text-xs flex-1 justify-center',
