@@ -9,6 +9,7 @@ import { Sidebar } from '@/widgets/sidebar/ui/sidebar';
 import StaffPage from '@/pages/dasboard/staff/page';
 import CategoryArticlesPage from '@/pages/dasboard/category-articles/page';
 import { SettingsPage } from '@/pages/dasboard/settings/page';
+import ArticlesPage from '@/pages/dasboard/articles/page';
 
 export const AppRouter = () => {
     const { isAuth, isInitialized, initAuth } = useSessionStore();
