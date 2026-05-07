@@ -11,8 +11,21 @@ import { CreateArticleForm } from '@/features/create-article/ui/CreateArticleFor
 import { EditArticleForm } from '@/features/edit-article/ui/EditArticleForm';
 import { useDeleteArticle } from '@/entities/article/hooks/use-delete';
 import { useArticleById } from '@/entities/article/hooks/use-get-by-id';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import { useQuery } from '@tanstack/react-query';
+import type { CategoryShortResponse } from '@/entities/article/model/types';
+import { getCategoryArticlesList } from '@/entities/category-article/api/api';
 
 export const ArticleTable = () => {
+    // Загрузка категорий для фильтра
+    const { data: categoriesData } = useQuery({
+        queryKey: ['admin-category-articles-list-filter'],
+        queryFn: () => getCategoryArticlesList({ limit: 1000 }),
+        enabled: true,
+    });
+
+    const categories = categoriesData?.items || [];
+
     // Используем лимит 10 по умолчанию
     const [filters, setFilters] = useState({
         search: '',
@@ -148,16 +161,25 @@ export const ArticleTable = () => {
                             ))}
                         </div>
 
-                        {/* Фильтр по категории */}
-                        <div className="relative">
-                            <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                            <input
-                                type="number"
-                                value={filters.category_id ?? ''}
-                                onChange={(e) => handleFilterChange({ category_id: e.target.value ? Number(e.target.value) : undefined, page: 0 })}
-                                className="pl-8 pr-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-ring transition-colors w-32"
-                                placeholder="ID категории"
-                            />
+                        {/* Фильтр по категории - ВЫПАДАЮЩИЙ СПИСОК */}
+                        <div className="relative min-w-[200px]">
+                            <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground z-10" />
+                            <Select
+                                value={filters.category_id ? String(filters.category_id) : ''}
+                                onValueChange={(val) => handleFilterChange({ category_id: val ? Number(val) : undefined, page: 0 })}
+                            >
+                                <SelectTrigger className="pl-8 pr-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-ring transition-colors w-full min-w-[200px]">
+                                    <SelectValue placeholder="Все категории" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="">Все категории</SelectItem>
+                                    {categories.map((cat: CategoryShortResponse) => (
+                                        <SelectItem key={cat.id} value={String(cat.id)}>
+                                            {cat.title}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         {/* Фильтр по дате создания - ОТ */}
@@ -330,8 +352,11 @@ export const ArticleTable = () => {
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 title="Добавить статью"
+                className="max-w-3xl"
             >
-                <CreateArticleForm onSuccess={handleCreateSuccess} />
+                <div className="max-h-[70vh] overflow-y-auto pr-2">
+                    <CreateArticleForm onSuccess={handleCreateSuccess} />
+                </div>
             </Modal>
 
             {/* Модальное окно подтверждения удаления */}
@@ -370,13 +395,14 @@ export const ArticleTable = () => {
                 isOpen={viewArticleId !== null}
                 onClose={handleViewClose}
                 title="Просмотр статьи"
+                className="max-w-3xl"
             >
                 {isLoadingViewArticle ? (
                     <div className="flex items-center justify-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
                     </div>
                 ) : viewArticleData ? (
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                         <div className="aspect-video rounded-xl overflow-hidden bg-muted">
                             {viewArticleData.image_url ? (
                                 <img
@@ -441,17 +467,20 @@ export const ArticleTable = () => {
                 isOpen={editArticleId !== null}
                 onClose={handleEditClose}
                 title="Редактировать статью"
+                className="max-w-3xl"
             >
                 {isLoadingEditArticle ? (
                     <div className="flex items-center justify-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
                     </div>
                 ) : editArticleData ? (
-                    <EditArticleForm 
-                        articleId={editArticleId} 
-                        article={editArticleData}
-                        onSuccess={handleEditSuccess} 
-                    />
+                    <div className="max-h-[70vh] overflow-y-auto pr-2">
+                        <EditArticleForm 
+                            articleId={editArticleId} 
+                            article={editArticleData}
+                            onSuccess={handleEditSuccess} 
+                        />
+                    </div>
                 ) : (
                     <p className="text-sm text-muted-foreground text-center py-8">
                         Статья не найдена
