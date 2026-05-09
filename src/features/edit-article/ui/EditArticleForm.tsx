@@ -5,12 +5,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { editArticleSchema, type EditArticleSchema } from '../model/schema';
 import { useUpdateArticle } from '@/entities/article/hooks/use-update';
 import { Button } from '@/shared/ui/button';
-import { Type, FileText, Tag, Eye, EyeOff } from 'lucide-react';
+import { Type, FileText, Tag, Eye, EyeOff, Calendar, Clock } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { useState, useEffect } from 'react';
 import { previewSlug, uploadFile } from '@/entities/article/api/api';
 import { FileUpload } from '@/shared/ui/file-upload';
-import type { Article } from '@/entities/article/model/types';
+import type { Article, CategoryShortResponse } from '@/entities/article/model/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import { useQuery } from '@tanstack/react-query';
+import { getCategoryArticlesList } from '@/entities/category-article/api/api';
 
 interface Props {
     articleId: number;
@@ -35,6 +38,15 @@ export const EditArticleForm = ({ articleId, article, onSuccess }: Props) => {
 
     const isPending = isUpdating || isUploadingImage;
 
+    // Загрузка категорий для селекта
+    const { data: categoriesData } = useQuery({
+        queryKey: ['admin-category-articles-list'],
+        queryFn: () => getCategoryArticlesList({ limit: 1000 }),
+        enabled: true,
+    });
+
+    const categories = categoriesData?.items || [];
+
     const {
         register,
         handleSubmit,
@@ -52,13 +64,24 @@ export const EditArticleForm = ({ articleId, article, onSuccess }: Props) => {
             content: article.content,
             image_path: extractRelativePath(article.image_url),
             is_active: article.is_active,
-       
         },
     });
 
     const title = watch('title');
     const isActive = watch('is_active');
-  
+
+    // Форматирование даты
+    const formatDate = (dateStr?: string) => {
+        if (!dateStr) return '—';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
 
     // Регистрация скрытых полей для корректной работы watch/setValue
     useEffect(() => {
@@ -132,35 +155,63 @@ export const EditArticleForm = ({ articleId, article, onSuccess }: Props) => {
     return (
         <form
             onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col gap-5 max-h-[80vh] overflow-y-auto pr-2"
+            className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto pr-2"
         >
-            <div className="bg-muted/50 border border-border rounded-xl p-3">
-                <p className="text-xs text-muted-foreground font-medium">
-                    <strong>Обратите внимание:</strong> Slug генерируется автоматически. Версия используется для защиты от одновременного редактирования.
-                </p>
+            {/* Инфо-блок о статье */}
+            <div className="grid grid-cols-2 gap-3 bg-muted/50 border border-border rounded-xl p-3">
+                <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Создана</p>
+                        <p className="text-xs font-semibold">{formatDate(article.created_at)}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Версия</p>
+                        <p className="text-xs font-semibold">{article.version}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 col-span-2">
+                    <Tag className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Текущая категория</p>
+                        <p className="text-xs font-semibold">{article.category?.title || '—'}</p>
+                    </div>
+                </div>
             </div>
 
             {/* Скрытые поля */}
             <input type="hidden" {...register('version', { valueAsNumber: true })} />
 
-            {/* Категория */}
+            {/* Категория - SELECT */}
             <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
                     Категория
                 </label>
-                <div className="relative">
-                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                        {...register('category_id', { valueAsNumber: true })}
-                        type="number"
-                        placeholder="ID категории"
-                        disabled={isPending}
-                        className={cn(
-                            'w-full pl-10 pr-4 py-2.5 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground',
-                            errors.category_id ? 'border-red-500' : 'border-border focus:border-primary'
-                        )}
-                    />
-                </div>
+                <Controller
+                    name="category_id"
+                    control={control}
+                    rules={{ required: 'Выберите категорию', min: { value: 1, message: 'Выберите категорию' } }}
+                    render={({ field }) => (
+                        <Select onValueChange={(val) => field.onChange(Number(val))} value={field.value ? String(field.value) : ''}>
+                            <SelectTrigger className={cn(
+                                "w-full",
+                                errors.category_id ? 'border-red-500' : 'border-border focus:border-primary'
+                            )}>
+                                <SelectValue placeholder="Выберите категорию" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {categories.map((cat: CategoryShortResponse) => (
+                                    <SelectItem key={cat.id} value={String(cat.id)}>
+                                        {cat.title}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
                 {errors.category_id && (
                     <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
                         {errors.category_id.message}
