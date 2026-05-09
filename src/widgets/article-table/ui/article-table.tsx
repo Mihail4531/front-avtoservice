@@ -1,7 +1,7 @@
 'use client';
 
 import { useArticleList } from '@/features/article-list/model/use-article-list';
-import { Search, FilePlus, ChevronLeft, ChevronRight, Calendar, Pencil, Eye, Trash2, Tag } from 'lucide-react';
+import { Search, FilePlus, ChevronLeft, ChevronRight, Calendar, Pencil, Eye, Trash2, Tag, CalendarCheck, FileText, Copy, Folder, Hash, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/lib/cn';
@@ -12,8 +12,9 @@ import { EditArticleForm } from '@/features/edit-article/ui/EditArticleForm';
 import { useDeleteArticle } from '@/entities/article/hooks/use-delete';
 import { useArticleById } from '@/entities/article/hooks/use-get-by-id';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
-import { useQuery } from '@tanstack/react-query';
+
 import { getCategoryArticlesList } from '@/entities/category-article/api/api';
+import { Link } from 'react-router-dom';
 
 export const ArticleTable = () => {
     // Загрузка категорий через useEffect
@@ -397,135 +398,136 @@ export const ArticleTable = () => {
                 isOpen={viewArticleId !== null}
                 onClose={handleViewClose}
                 title="Просмотр статьи"
-                className="max-w-3xl"
+                className="max-w-2xl"
             >
                 {isLoadingViewArticle ? (
-                    <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
+                    <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]" />
                     </div>
                 ) : viewArticleData ? (
-                    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-                        {/* Изображение */}
-                        <div className="aspect-video rounded-xl overflow-hidden bg-muted">
-                            {viewArticleData.image_url ? (
-                                <img
-                                    src={viewArticleData.image_url}
-                                    alt={viewArticleData.title}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <FilePlus className="w-12 h-12 text-muted-foreground" />
+                    <div className="space-y-5">
+                        {/* Шапка: картинка + заголовок/статус */}
+                        <div className="flex items-start gap-4">
+                            <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                                {viewArticleData.image_url ? (
+                                    <img
+                                        src={viewArticleData.image_url}
+                                        alt={viewArticleData.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <FilePlus className="w-8 h-8 text-muted-foreground" />
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-foreground text-xl mb-2">
+                                    {viewArticleData.title}
+                                </h3>
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                    <span className={cn(
+                                        "px-2.5 py-0.5 rounded-full text-xs font-bold uppercase border",
+                                        viewArticleData.is_active
+                                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+                                            : "bg-muted text-muted-foreground border-border"
+                                    )}>
+                                        {viewArticleData.is_active ? 'Активна' : 'Неактивна'}
+                                    </span>
+                                    <code className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                                        {viewArticleData.slug}
+                                    </code>
                                 </div>
-                            )}
+                                <p className="text-xs text-muted-foreground">
+                                    Версия: {viewArticleData.version}
+                                </p>
+                            </div>
                         </div>
 
-                        {/* Основная информация */}
-                        <div>
-                            <h3 className="text-lg font-bold text-foreground mb-1">{viewArticleData.title}</h3>
-                            <p className="text-sm text-muted-foreground mb-2">{viewArticleData.description}</p>
+                        {/* Описание */}
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-foreground text-sm uppercase tracking-wider">
+                                Описание
+                            </h4>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                {viewArticleData.description || 'Описание отсутствует'}
+                            </p>
                         </div>
 
-                        {/* Детали статьи */}
-                        <div className="grid grid-cols-2 gap-3 bg-muted/50 border border-border rounded-xl p-3">
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">ID</p>
-                                <p className="text-xs font-semibold">{viewArticleData.id}</p>
+                        {/* Содержимое (добавим, как особенность статьи) */}
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-foreground text-sm uppercase tracking-wider">
+                                Содержимое
+                            </h4>
+                            <div className="text-sm text-muted-foreground leading-relaxed bg-muted/20 border border-border rounded-xl p-4">
+                                {viewArticleData.content ? (
+                                    <div className="whitespace-pre-wrap break-words">
+                                        {viewArticleData.content}
+                                    </div>
+                                ) : (
+                                    'Содержимое отсутствует'
+                                )}
                             </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Версия</p>
-                                <p className="text-xs font-semibold">{viewArticleData.version}</p>
+                        </div>
+
+                        {/* Мета-информация: дата создания, категория, дата публикации */}
+                        <div className="flex flex-wrap gap-4 pt-2 border-t border-border">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Calendar className="w-3.5 h-3.5" />
+                                <span>Создана: {new Date(viewArticleData.created_at).toLocaleDateString('ru-RU', {
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}</span>
                             </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Slug</p>
-                                <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{viewArticleData.slug}</code>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Статус</p>
-                                <span className={cn(
-                                    "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
-                                    viewArticleData.is_active
-                                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                                        : "bg-muted text-muted-foreground"
-                                )}>
-                                    {viewArticleData.is_active ? 'Активна' : 'Неактивна'}
-                                </span>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Категория</p>
-                                <p className="text-xs font-semibold">{viewArticleData.category?.title || '—'}</p>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">ID категории</p>
-                                <p className="text-xs font-semibold">{viewArticleData.category?.id || '—'}</p>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Slug категории</p>
-                                <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{viewArticleData.category?.slug || '—'}</code>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Создана</p>
-                                <p className="text-xs font-semibold">
-                                    {new Date(viewArticleData.created_at).toLocaleDateString('ru-RU', {
-                                        day: '2-digit',
-                                        month: '2-digit',
+                            {viewArticleData.published_at && (
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <CalendarCheck className="w-3.5 h-3.5" />
+                                    <span>Опубликована: {new Date(viewArticleData.published_at).toLocaleDateString('ru-RU', {
+                                        day: 'numeric',
+                                        month: 'long',
                                         year: 'numeric',
                                         hour: '2-digit',
                                         minute: '2-digit'
-                                    })}
-                                </p>
-                            </div>
-                            {viewArticleData.published_at && (
-                                <div>
-                                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Опубликована</p>
-                                    <p className="text-xs font-semibold">
-                                        {new Date(viewArticleData.published_at).toLocaleDateString('ru-RU', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
-                                    </p>
+                                    })}</span>
+                                </div>
+                            )}
+                            {viewArticleData.category && (
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <Folder className="w-3.5 h-3.5" />
+                                    <span>Категория: {viewArticleData.category.title}</span>
                                 </div>
                             )}
                         </div>
 
-                        {/* Содержимое */}
-                        <div>
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase mb-2">Содержимое</p>
-                            <div className="prose dark:prose-invert max-w-none">
-                                <p className="text-sm text-foreground whitespace-pre-wrap">{viewArticleData.content}</p>
-                            </div>
-                        </div>
-
-                        {/* Кнопки действий */}
+                        {/* Кнопки действий (как в категориях: Закрыть + Редактировать) */}
                         <div className="flex gap-3 pt-4">
                             <Button
+                                type="button"
                                 variant="outline"
+                                onClick={handleViewClose}
+                                className="flex-1"
+                            >
+                                Закрыть
+                            </Button>
+                            <Button
+                                type="button"
                                 onClick={() => {
                                     handleViewClose();
                                     handleEditClick(viewArticleData.id);
                                 }}
-                                className="flex-1"
+                                className="flex-1 bg-[var(--red)] hover:bg-red-700"
                             >
                                 <Pencil className="w-4 h-4 mr-2" />
                                 Редактировать
                             </Button>
-                            <Button
-                                variant="destructive"
-                                onClick={() => {
-                                    handleViewClose();
-                                    handleDeleteClick(viewArticleData.id);
-                                }}
-                                className="flex-1 bg-red-600 hover:bg-red-700"
-                            >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Удалить
-                            </Button>
                         </div>
                     </div>
-                ) : null}
+                ) : (
+                    <div className="text-center py-12">
+                        <p className="text-muted-foreground">Статья не найдена</p>
+                    </div>
+                )}
             </Modal>
 
             {/* Модальное окно редактирования статьи */}
