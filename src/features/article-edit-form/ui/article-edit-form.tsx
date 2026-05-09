@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/shared/ui/switch';
 import { Label } from '@/shared/ui/label';
 import { useArticleById } from '@/entities/article/hooks/use-get-by-id';
-import { useUpdateArticle } from '@/entities/article/hooks/use-update-article';
-import { useCreateArticle } from '@/entities/article/hooks/use-create-article';
+import { useUpdateArticle } from '@/entities/article/hooks/use-update';
+import { useCreateArticle } from '@/entities/article/hooks/use-create';
 import { useCategories } from '@/entities/category/hooks/use-get-all';
 import { useEffect } from 'react';
 
@@ -78,14 +78,24 @@ export function ArticleEditForm({ mode = 'edit' }: ArticleEditFormProps) {
                 await updateMutation.mutateAsync({
                     id: Number(id),
                     data: {
-                        ...data,
                         category_id: Number(data.category_id),
+                        title: data.title,
+                        slug: data.slug,
+                        description: data.description,
+                        content: data.content,
+                        image_path: data.image_url || '',
+                        is_active: data.is_active,
+                        version: article?.version || 1,
                     },
                 });
             } else {
                 await createMutation.mutateAsync({
-                    ...data,
                     category_id: Number(data.category_id),
+                    title: data.title,
+                    slug: data.slug,
+                    description: data.description,
+                    content: data.content,
+                    image_path: data.image_url || '',
                 });
             }
             navigate('/dashboard/admin/articles');
