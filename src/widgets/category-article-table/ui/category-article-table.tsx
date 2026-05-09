@@ -11,8 +11,9 @@ import { CreateCategoryArticleForm } from '@/features/create-category-article/ui
 import { EditCategoryArticleForm } from '@/features/edit-category-article/ui/EditCategoryArticleForm';
 import { useDeleteCategoryArticle } from '@/entities/category-article/hooks/use-delete';
 import { useCategoryArticleById } from '@/entities/category-article/hooks/use-get-by-id';
-
+import { useNavigate } from 'react-router-dom';
 export const CategoryArticleTable = () => {
+    const navigate = useNavigate();
     // Используем лимит 10 по умолчанию
     const [filters, setFilters] = useState({
         search: '',
@@ -83,8 +84,8 @@ export const CategoryArticleTable = () => {
         setViewCategoryId(null);
     };
 
-    const handleEditClick = (id: number) => {
-        setEditCategoryId(id);
+    const handleEditNavigate = (id: number) => {
+        navigate(`/dashboard/admin/categories/articles/${id}/edit`);
     };
 
     const handleEditClose = () => {
@@ -250,7 +251,7 @@ export const CategoryArticleTable = () => {
                                         <button
                                             className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
                                             title="Редактировать категорию"
-                                            onClick={() => handleEditClick(category.id)}
+                                            onClick={() => handleEditNavigate(category.id)}
                                         >
                                             <Pencil className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
                                         </button>
@@ -441,7 +442,7 @@ export const CategoryArticleTable = () => {
                                 type="button"
                                 onClick={() => {
                                     handleViewClose();
-                                    handleEditClick(viewCategoryData.id);
+                                    handleEditNavigate(viewCategoryData.id);
                                 }}
                                 className="flex-1 bg-[var(--red)] hover:bg-red-700"
                             >
