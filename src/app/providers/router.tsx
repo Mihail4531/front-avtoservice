@@ -11,6 +11,8 @@ import CategoryArticlesPage from '@/pages/dasboard/category-articles/page';
 import { SettingsPage } from '@/pages/dasboard/settings/page';
 import ArticlesPage from '@/pages/dasboard/articles/page';
 import ArticleViewPage from '@/pages/dasboard/articles/view/page';
+import ArticleEditPage from '@/pages/admin/article-edit/page';
+import ArticleCreatePage from '@/pages/admin/article-create/page';
 
 export const AppRouter = () => {
     const { isAuth, isInitialized, initAuth } = useSessionStore();
@@ -59,6 +61,8 @@ export const AppRouter = () => {
                             <Route path="admin/categories/articles" element={<CategoryArticlesPage />} />
                             <Route path="admin/articles" element={<ArticlesPage />} />
                             <Route path="admin/articles/:id/view" element={<ArticleViewPage />} />
+                            <Route path="admin/articles/:id/edit" element={<ArticleEditPage />} />
+                            <Route path="admin/articles/create" element={<ArticleCreatePage />} />
                             <Route path="settings" element={<SettingsPage />} />
                         </Route>
 

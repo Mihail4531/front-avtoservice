@@ -7,10 +7,7 @@ import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/lib/cn';
 import { useState, useEffect } from 'react';
 import { Modal } from '@/shared/ui/modal';
-import { CreateArticleForm } from '@/features/create-article/ui/CreateArticleForm';
-import { EditArticleForm } from '@/features/edit-article/ui/EditArticleForm';
 import { useDeleteArticle } from '@/entities/article/hooks/use-delete';
-import { useArticleById } from '@/entities/article/hooks/use-get-by-id';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 
 import { getCategoryArticlesList } from '@/entities/category-article/api/api';
@@ -42,26 +39,14 @@ export const ArticleTable = () => {
         filters,
     });
 
-    // Состояние для модального окна создания
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     // Состояние для модального окна подтверждения удаления
     const [deleteArticleId, setDeleteArticleId] = useState<number | null>(null);
-    // Состояние для модального окна редактирования статьи
-    const [editArticleId, setEditArticleId] = useState<number | null>(null);
 
     // Хук для удаления статьи
     const { mutate: deleteArticle, isPending: isDeleting } = useDeleteArticle();
 
-    // Хук для получения данных о статье (используется только для редактирования)
-    const { data: editArticleData, isLoading: isLoadingEditArticle } = useArticleById(editArticleId);
-
     // Расчет общего количества страниц на основе данных из Go
     const totalPages = data ? Math.ceil(data.total / 5) : 0;
-
-    const handleCreateSuccess = () => {
-        setIsCreateModalOpen(false);
-        refresh(); // Обновляем список после создания
-    };
 
     const handleFilterChange = (newFilters: Partial<typeof filters>) => {
         setFilters(prev => ({ ...prev, ...newFilters, page: newFilters.page !== undefined ? newFilters.page : prev.page }));
@@ -86,19 +71,6 @@ export const ArticleTable = () => {
         setDeleteArticleId(null);
     };
 
-    const handleEditClick = (id: number) => {
-        setEditArticleId(id);
-    };
-
-    const handleEditClose = () => {
-        setEditArticleId(null);
-    };
-
-    const handleEditSuccess = () => {
-        setEditArticleId(null);
-        refresh();
-    };
-
     return (
         <div className="space-y-6">
             {/* Панель управления: Поиск + Фильтры статуса + Добавление */}
@@ -119,7 +91,7 @@ export const ArticleTable = () => {
 
                         <Button
                             className="gap-2 font-bold bg-[var(--red)] hover:bg-red-700 w-full md:w-auto"
-                            onClick={() => setIsCreateModalOpen(true)}
+                            onClick={() => navigate('/dashboard/admin/articles/create')}
                         >
                             <FilePlus className="w-4 h-4" />
                             Добавить статью
@@ -287,7 +259,7 @@ export const ArticleTable = () => {
                                         <button
                                             className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
                                             title="Редактировать статью"
-                                            onClick={() => handleEditClick(article.id)}
+                                            onClick={() => navigate(`/dashboard/admin/articles/${article.id}/edit`)}
                                         >
                                             <Pencil className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
                                         </button>
@@ -339,18 +311,6 @@ export const ArticleTable = () => {
                 </div>
             </div>
 
-            {/* Модальное окно создания статьи */}
-            <Modal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                title="Добавить статью"
-                className="max-w-3xl"
-            >
-                <div className="max-h-[70vh] overflow-y-auto pr-2">
-                    <CreateArticleForm onSuccess={handleCreateSuccess} />
-                </div>
-            </Modal>
-
             {/* Модальное окно подтверждения удаления */}
             <Modal
                 isOpen={deleteArticleId !== null}
@@ -381,23 +341,6 @@ export const ArticleTable = () => {
                     </div>
                 </div>
             </Modal>
-
-            {/* Модальное окно редактирования статьи */}
-            <Modal
-                isOpen={editArticleId !== null}
-                onClose={handleEditClose}
-                title="Редактировать статью"
-                className="max-w-3xl"
-            >
-                {isLoadingEditArticle ? (
-                    <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
-                    </div>
-                ) : editArticleData ? (
-                    <EditArticleForm article={editArticleData} articleId={editArticleId!} onSuccess={handleEditSuccess} />
-                ) : null}
-            </Modal>
-
 
         </div>
     );
