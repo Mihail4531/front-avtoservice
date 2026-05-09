@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Eye, Edit, Archive, Copy, Trash2, History, Calendar, Tag, Link as LinkIcon, Clock, Check, Folder, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Eye, Edit, Archive, Copy, Trash2, History, Calendar, Link as LinkIcon, Clock, Check, Folder, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { useArticleById } from '@/entities/article/hooks/use-get-by-id';
 import { cn } from '@/shared/lib/cn';
@@ -10,7 +10,6 @@ export default function ArticleViewPage() {
     const navigate = useNavigate();
     const [heroVariant, setHeroVariant] = useState<'tall' | 'standard' | 'compact'>('standard');
     const [showSide, setShowSide] = useState(true);
-    const [activeAnchor, setActiveAnchor] = useState('intro');
 
     const { data: article, isLoading } = useArticleById(id ? Number(id) : null);
 
