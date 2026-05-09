@@ -2,31 +2,11 @@
 # Dependencies
 node_modules/
 
-# Build outputs
-dist/
-build/
-.next/
-out/
+# Build artifacts
+node_modules/.tmp/
 
-# Environment variables
+# Environment
 .env
 .env.local
-.env.*
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Logs
-*.log
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# Temporary files
-*.tmp
+*.env.*
 ```
