@@ -10,6 +10,7 @@ import StaffPage from '@/pages/dasboard/staff/page';
 import CategoryArticlesPage from '@/pages/dasboard/category-articles/page';
 import { SettingsPage } from '@/pages/dasboard/settings/page';
 import ArticlesPage from '@/pages/dasboard/articles/page';
+import { ArticleEditorPage } from '@/pages/dasboard/articles/editor/page';
 
 export const AppRouter = () => {
     const { isAuth, isInitialized, initAuth } = useSessionStore();
@@ -58,6 +59,8 @@ export const AppRouter = () => {
                             <Route path="admin/categories/articles" element={<CategoryArticlesPage />} />
                             <Route path="admin/articles" element={<ArticlesPage />} />
                             <Route path="settings" element={<SettingsPage />} />
+                            <Route path="admin/articles/new" element={<ArticleEditorPage />} />
+                            <Route path="admin/articles/:id/edit" element={<ArticleEditorPage />} />
                         </Route>
 
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -1,10 +1,8 @@
 'use client';
 
 import {
-    Children,
     createContext,
     forwardRef,
-    isValidElement,
     useContext,
     useEffect,
     useId,
@@ -23,6 +21,8 @@ interface SelectContextValue {
     setOpen: (open: boolean) => void;
     triggerRef: React.RefObject<HTMLButtonElement | null>;
     contentId: string;
+    labels: Map<string, ReactNode>;
+    registerLabel: (value: string, label: ReactNode) => void;
 }
 
 const SelectContext = createContext<SelectContextValue | null>(null);
@@ -32,9 +32,6 @@ function useSelect() {
     if (!ctx) throw new Error('Select components must be used inside <Select>');
     return ctx;
 }
-
-// Контекст для SelectValue — содержит дерево children из SelectContent
-const SelectChildrenContext = createContext<ReactNode>(null);
 
 interface SelectProps {
     value?: string;
@@ -46,6 +43,8 @@ interface SelectProps {
 export const Select = ({ value, onValueChange, defaultValue, children }: SelectProps) => {
     const [internalValue, setInternalValue] = useState(defaultValue ?? '');
     const [open, setOpen] = useState(false);
+    const [labelsVersion, setLabelsVersion] = useState(0);
+    const labelsRef = useRef<Map<string, ReactNode>>(new Map());
     const triggerRef = useRef<HTMLButtonElement | null>(null);
     const contentId = useId();
 
@@ -58,9 +57,15 @@ export const Select = ({ value, onValueChange, defaultValue, children }: SelectP
         setOpen(false);
     };
 
+    const registerLabel = (val: string, label: ReactNode) => {
+        const current = labelsRef.current.get(val);
+        if (typeof label === 'string' && current === label) return;
+        labelsRef.current.set(val, label);
+        setLabelsVersion((v) => v + 1);
+    };
+
     useEffect(() => {
         if (!open) return;
-
         const handleClickOutside = (e: MouseEvent) => {
             const target = e.target as Node;
             if (triggerRef.current?.contains(target)) return;
@@ -68,11 +73,9 @@ export const Select = ({ value, onValueChange, defaultValue, children }: SelectP
             if (content?.contains(target)) return;
             setOpen(false);
         };
-
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') setOpen(false);
         };
-
         document.addEventListener('mousedown', handleClickOutside);
         document.addEventListener('keydown', handleEscape);
         return () => {
@@ -81,18 +84,27 @@ export const Select = ({ value, onValueChange, defaultValue, children }: SelectP
         };
     }, [open, contentId]);
 
+    // labelsVersion в зависимостях — пересоздаём Map при изменении
+    const contextValue = {
+        value: currentValue,
+        onValueChange: handleValueChange,
+        open,
+        setOpen,
+        triggerRef,
+        contentId,
+        labels: new Map(labelsRef.current),
+        registerLabel,
+    };
+
+    // labelsVersion используется неявно через перерендер компонента
+    void labelsVersion;
+
     return (
-        <SelectContext.Provider
-            value={{
-                value: currentValue,
-                onValueChange: handleValueChange,
-                open,
-                setOpen,
-                triggerRef,
-                contentId,
-            }}
-        >
-            <div className="relative w-full">{children}</div>
+        <SelectContext.Provider value={contextValue}>
+            <div className="relative w-full">
+                {children}
+               
+            </div>
         </SelectContext.Provider>
     );
 };
@@ -105,7 +117,6 @@ interface SelectTriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
     ({ className, children, ...props }, _ref) => {
         const { open, setOpen, triggerRef } = useSelect();
-
         return (
             <button
                 ref={triggerRef}
@@ -143,44 +154,19 @@ interface SelectValueProps {
     className?: string;
 }
 
-// Ищет SelectItem по value среди children и возвращает его label
-function findLabel(children: ReactNode, targetValue: string): ReactNode | null {
-    let found: ReactNode | null = null;
-
-    Children.forEach(children, (child) => {
-        if (found !== null) return;
-        if (!isValidElement(child)) return;
-
-        const props = child.props as { value?: string; children?: ReactNode };
-        if (props.value === targetValue) {
-            found = props.children ?? null;
-            return;
-        }
-
-        // Рекурсивно ищем во вложенных (на случай группировки)
-        if (props.children) {
-            const nested = findLabel(props.children, targetValue);
-            if (nested !== null) found = nested;
-        }
-    });
-
-    return found;
-}
-
 export const SelectValue = ({ placeholder, className }: SelectValueProps) => {
-    const { value } = useSelect();
-    const childrenTree = useContext(SelectChildrenContext);
+    const { value, labels } = useSelect();
+    const label = value ? labels.get(value) : null;
 
-    const label = value ? findLabel(childrenTree, value) : null;
+    console.log('🟢 SelectValue render. value:', value, 'labels:', Array.from(labels.entries()), 'found label:', label);
 
-    if (!value || label === null) {
+    if (!value || label === null || label === undefined) {
         return (
             <span className={cn('text-muted-foreground font-medium', className)}>
                 {placeholder ?? 'Выберите...'}
             </span>
         );
     }
-
     return <span className={cn('truncate', className)}>{label}</span>;
 };
 
@@ -193,13 +179,13 @@ export const SelectContent = ({ className, children }: SelectContentProps) => {
     const { open, contentId } = useSelect();
 
     return (
-        <SelectChildrenContext.Provider value={children}>
+        <>
             {open && (
                 <div
                     id={contentId}
                     role="listbox"
                     className={cn(
-                        'absolute left-0 right-0 top-full z-50 mt-1.5',
+                        'absolute left-0 right-0 top-full z-[100] mt-1.5',
                         'max-h-60 overflow-y-auto',
                         'rounded-xl border border-border bg-card shadow-lg',
                         'p-1',
@@ -209,7 +195,9 @@ export const SelectContent = ({ className, children }: SelectContentProps) => {
                     {children}
                 </div>
             )}
-        </SelectChildrenContext.Provider>
+            {/* Скрытая регистрация — рендерим children когда меню закрыто */}
+            {!open && <div className="hidden">{children}</div>}
+        </>
     );
 };
 
@@ -221,8 +209,14 @@ interface SelectItemProps {
 }
 
 export const SelectItem = ({ value, children, className, disabled }: SelectItemProps) => {
-    const { value: selectedValue, onValueChange } = useSelect();
+    const { value: selectedValue, onValueChange, registerLabel } = useSelect();
     const isSelected = selectedValue === value;
+
+    useEffect(() => {
+        console.log('🔵 SelectItem mount. value:', value, 'children:', children);
+        registerLabel(value, children);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value, typeof children === 'string' ? children : null]);
 
     return (
         <button

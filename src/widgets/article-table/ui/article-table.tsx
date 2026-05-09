@@ -4,75 +4,59 @@ import { useArticleList } from '@/features/article-list/model/use-article-list';
 import { Search, FilePlus, ChevronLeft, ChevronRight, Calendar, Pencil, Eye, Trash2, Tag } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/shared/lib/cn';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '@/shared/ui/modal';
-import { CreateArticleForm } from '@/features/create-article/ui/CreateArticleForm';
-import { EditArticleForm } from '@/features/edit-article/ui/EditArticleForm';
 import { useDeleteArticle } from '@/entities/article/hooks/use-delete';
 import { useArticleById } from '@/entities/article/hooks/use-get-by-id';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
-import { useQuery } from '@tanstack/react-query';
-import type { CategoryShortResponse } from '@/entities/article/model/types';
 import { getCategoryArticlesList } from '@/entities/category-article/api/api';
 
 export const ArticleTable = () => {
-    // Загрузка категорий для фильтра
-    const { data: categoriesData } = useQuery({
-        queryKey: ['admin-category-articles-list-filter'],
-        queryFn: () => getCategoryArticlesList({ limit: 1000 }),
-        enabled: true,
-    });
+    const navigate = useNavigate();
+    const [categories, setCategories] = useState<any[]>([]);
 
-    const categories = categoriesData?.items || [];
+    useEffect(() => {
+        getCategoryArticlesList({ limit: 100 })
+            .then((data) => setCategories(data?.items || []))
+            .catch((err) => console.error('Failed to load categories:', err));
+    }, []);
 
-    // Используем лимит 10 по умолчанию
     const [filters, setFilters] = useState({
         search: '',
         is_active: undefined as boolean | undefined,
         created_at_from: '',
         created_at_to: '',
         category_id: undefined as number | undefined,
-        page: 0
+        page: 0,
     });
 
     const { data, isLoading, refresh } = useArticleList({
         initialLimit: 5,
-        filters
+        filters,
     });
 
-    // Состояние для модального окна создания
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    // Состояние для модального окна подтверждения удаления
+    // Состояния модалок
     const [deleteArticleId, setDeleteArticleId] = useState<number | null>(null);
-    // Состояние для модального окна просмотра статьи
     const [viewArticleId, setViewArticleId] = useState<number | null>(null);
-    // Состояние для модального окна редактирования статьи
-    const [editArticleId, setEditArticleId] = useState<number | null>(null);
 
-    // Хук для удаления статьи
+    // Хуки
     const { mutate: deleteArticle, isPending: isDeleting } = useDeleteArticle();
-
-    // Хук для получения данных о статье (используется только для просмотра)
     const { data: viewArticleData, isLoading: isLoadingViewArticle } = useArticleById(viewArticleId);
-    // Хук для получения данных о статье (используется только для редактирования)
-    const { data: editArticleData, isLoading: isLoadingEditArticle } = useArticleById(editArticleId);
 
-    // Расчет общего количества страниц на основе данных из Go
     const totalPages = data ? Math.ceil(data.total / 5) : 0;
 
-    const handleCreateSuccess = () => {
-        setIsCreateModalOpen(false);
-        refresh(); // Обновляем список после создания
-    };
-
     const handleFilterChange = (newFilters: Partial<typeof filters>) => {
-        setFilters(prev => ({ ...prev, ...newFilters, page: newFilters.page !== undefined ? newFilters.page : prev.page }));
+        setFilters((prev) => ({
+            ...prev,
+            ...newFilters,
+            page: newFilters.page !== undefined ? newFilters.page : prev.page,
+        }));
     };
 
-    const handleDeleteClick = (id: number) => {
-        setDeleteArticleId(id);
-    };
+    const handleDeleteClick = (id: number) => setDeleteArticleId(id);
+    const handleDeleteCancel = () => setDeleteArticleId(null);
 
     const handleDeleteConfirm = () => {
         if (deleteArticleId !== null) {
@@ -80,44 +64,25 @@ export const ArticleTable = () => {
                 onSuccess: () => {
                     setDeleteArticleId(null);
                     refresh();
-                }
+                },
             });
         }
     };
 
-    const handleDeleteCancel = () => {
-        setDeleteArticleId(null);
-    };
+    const handleViewClick = (id: number) => setViewArticleId(id);
+    const handleViewClose = () => setViewArticleId(null);
 
-    const handleViewClick = (id: number) => {
-        setViewArticleId(id);
-    };
-
-    const handleViewClose = () => {
-        setViewArticleId(null);
-    };
-
-    const handleEditClick = (id: number) => {
-        setEditArticleId(id);
-    };
-
-    const handleEditClose = () => {
-        setEditArticleId(null);
-    };
-
-    const handleEditSuccess = () => {
-        setEditArticleId(null);
-        refresh();
+    const handleEditNavigate = (id: number) => {
+        navigate(`/dashboard/admin/articles/${id}/edit`);
     };
 
     return (
         <div className="space-y-6">
-            {/* Панель управления: Поиск + Фильтры статуса + Добавление */}
+            {/* Панель управления */}
             <div className="flex flex-col gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
                 <div className="flex flex-col gap-4">
-                    {/* Верхняя строка: Поиск + Кнопка Добавить */}
+                    {/* Верхняя строка */}
                     <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-                        {/* Инпут поиска */}
                         <div className="relative w-full md:w-96">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                             <Input
@@ -130,16 +95,15 @@ export const ArticleTable = () => {
 
                         <Button
                             className="gap-2 font-bold bg-[var(--red)] hover:bg-red-700 w-full md:w-auto"
-                            onClick={() => setIsCreateModalOpen(true)}
+                            onClick={() => navigate('/dashboard/admin/articles/new')}
                         >
                             <FilePlus className="w-4 h-4" />
                             Добавить статью
                         </Button>
                     </div>
 
-                    {/* Нижняя строка: Фильтры */}
+                    {/* Фильтры */}
                     <div className="flex flex-wrap items-center gap-4">
-                        {/* Фильтрация по активности */}
                         <div className="flex bg-muted/50 p-1 rounded-lg border border-border">
                             {[
                                 { label: 'Все', value: undefined },
@@ -150,10 +114,10 @@ export const ArticleTable = () => {
                                     key={tab.label}
                                     onClick={() => handleFilterChange({ is_active: tab.value, page: 0 })}
                                     className={cn(
-                                        "px-3 py-1.5 text-xs font-bold rounded-md transition-all",
+                                        'px-3 py-1.5 text-xs font-bold rounded-md transition-all',
                                         filters.is_active === tab.value
-                                            ? "bg-card text-foreground shadow-sm"
-                                            : "text-muted-foreground hover:text-foreground"
+                                            ? 'bg-card text-foreground shadow-sm'
+                                            : 'text-muted-foreground hover:text-foreground'
                                     )}
                                 >
                                     {tab.label}
@@ -161,65 +125,90 @@ export const ArticleTable = () => {
                             ))}
                         </div>
 
-                        {/* Фильтр по категории - ВЫПАДАЮЩИЙ СПИСОК */}
-                        <div className="relative min-w-[200px]">
-                            <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground z-10" />
+                        <div className="flex items-center gap-2 min-w-[200px]">
                             <Select
                                 value={filters.category_id ? String(filters.category_id) : ''}
-                                onValueChange={(val) => handleFilterChange({ category_id: val ? Number(val) : undefined, page: 0 })}
+                                onValueChange={(val) =>
+                                    handleFilterChange({
+                                        category_id: val ? Number(val) : undefined,
+                                        page: 0,
+                                    })
+                                }
                             >
-                                <SelectTrigger className="pl-8 pr-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-ring transition-colors w-full min-w-[200px]">
+                                <SelectTrigger className="text-xs">
+                                    <Tag className="w-3.5 h-3.5 text-muted-foreground mr-2" />
                                     <SelectValue placeholder="Все категории" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Все категории</SelectItem>
-                                    {categories.map((cat: CategoryShortResponse) => (
+                                    {categories.map((cat) => (
                                         <SelectItem key={cat.id} value={String(cat.id)}>
                                             {cat.title}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
+                            {filters.category_id && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleFilterChange({ category_id: undefined, page: 0 })}
+                                    className="text-muted-foreground hover:text-foreground px-2"
+                                    title="Сбросить категорию"
+                                >
+                                    ✕
+                                </button>
+                            )}
                         </div>
 
-                        {/* Фильтр по дате создания - ОТ */}
                         <div className="relative">
                             <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                             <input
                                 type="date"
                                 value={filters.created_at_from}
-                                onChange={(e) => handleFilterChange({ created_at_from: e.target.value, page: 0 })}
+                                onChange={(e) =>
+                                    handleFilterChange({ created_at_from: e.target.value, page: 0 })
+                                }
                                 className="pl-8 pr-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-ring transition-colors"
-                                placeholder="С даты"
                             />
                         </div>
 
-                        {/* Фильтр по дате создания - ДО */}
                         <div className="relative">
                             <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                             <input
                                 type="date"
                                 value={filters.created_at_to}
-                                onChange={(e) => handleFilterChange({ created_at_to: e.target.value, page: 0 })}
+                                onChange={(e) =>
+                                    handleFilterChange({ created_at_to: e.target.value, page: 0 })
+                                }
                                 className="pl-8 pr-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-ring transition-colors"
-                                placeholder="По дату"
                             />
                         </div>
 
-                        {/* Кнопка сброса фильтров */}
-                        {(filters.search || filters.created_at_from || filters.created_at_to || filters.is_active !== undefined || filters.category_id) && (
-                            <button
-                                onClick={() => setFilters({ search: '', is_active: undefined, created_at_from: '', created_at_to: '', category_id: undefined, page: 0 })}
-                                className="px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            >
-                                Сбросить
-                            </button>
-                        )}
+                        {(filters.search ||
+                            filters.created_at_from ||
+                            filters.created_at_to ||
+                            filters.is_active !== undefined ||
+                            filters.category_id) && (
+                                <button
+                                    onClick={() =>
+                                        setFilters({
+                                            search: '',
+                                            is_active: undefined,
+                                            created_at_from: '',
+                                            created_at_to: '',
+                                            category_id: undefined,
+                                            page: 0,
+                                        })
+                                    }
+                                    className="px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                >
+                                    Сбросить
+                                </button>
+                            )}
                     </div>
                 </div>
             </div>
 
-            {/* Table */}
+            {/* Таблица */}
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-muted/50 border-b border-border">
@@ -233,87 +222,99 @@ export const ArticleTable = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border text-sm">
-                        {isLoading ? (
-                            [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
-                        ) : data?.items.map((article) => (
-                            <tr key={article.id} className="hover:bg-muted/30 transition-colors group">
-                                <td className="p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                                            {article.image_url ? (
-                                                <img
-                                                    src={article.image_url}
-                                                    alt={article.title}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <FilePlus className="w-5 h-5 text-muted-foreground" />
+                        {isLoading
+                            ? [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
+                            : data?.items.map((article) => (
+                                <tr key={article.id} className="hover:bg-muted/30 transition-colors group">
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+                                                {article.image_url ? (
+                                                    <img
+                                                        src={article.image_url}
+                                                        alt={article.title}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <FilePlus className="w-5 h-5 text-muted-foreground" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-foreground">{article.title}</p>
+                                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                                    {article.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-2">
+                                            <Tag className="w-3 h-3 text-muted-foreground" />
+                                            <span className="text-sm font-medium text-foreground">
+                                                {article.category?.title || '—'}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <code className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                                            {article.slug}
+                                        </code>
+                                    </td>
+                                    <td className="p-4 text-muted-foreground font-medium">
+                                        {new Date(article.created_at).toLocaleDateString('ru-RU')}
+                                    </td>
+                                    <td className="p-4">
+                                        <span
+                                            className={cn(
+                                                'px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border',
+                                                article.is_active
+                                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800'
+                                                    : 'bg-muted text-muted-foreground border-border'
                                             )}
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-foreground">{article.title}</p>
-                                            <p className="text-xs text-muted-foreground line-clamp-1">{article.description}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex items-center gap-2">
-                                        <Tag className="w-3 h-3 text-muted-foreground" />
-                                        <span className="text-sm font-medium text-foreground">
-                                            {article.category?.title || '—'}
+                                        >
+                                            {article.is_active ? 'Активна' : 'Неактивна'}
                                         </span>
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <code className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded">
-                                        {article.slug}
-                                    </code>
-                                </td>
-                                <td className="p-4 text-muted-foreground font-medium">
-                                    {new Date(article.created_at).toLocaleDateString('ru-RU')}
-                                </td>
-                                <td className="p-4">
-                                    <span className={cn(
-                                        "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border",
-                                        article.is_active
-                                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
-                                            : "bg-muted text-muted-foreground border-border"
-                                    )}>
-                                        {article.is_active ? 'Активна' : 'Неактивна'}
-                                    </span>
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
-                                            title="Просмотр статьи"
-                                            onClick={() => handleViewClick(article.id)}
-                                        >
-                                            <Eye className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
-                                        </button>
-                                        <button
-                                            className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
-                                            title="Редактировать статью"
-                                            onClick={() => handleEditClick(article.id)}
-                                        >
-                                            <Pencil className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
-                                        </button>
-
-                                        <button
-                                            className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
-                                            title="Удалить статью"
-                                            onClick={() => handleDeleteClick(article.id)}
-                                        >
-                                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-red-600" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
+                                                title="Просмотр"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleViewClick(article.id);
+                                                }}
+                                            >
+                                                <Eye className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
+                                            </button>
+                                            <button
+                                                className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
+                                                title="Редактировать"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditNavigate(article.id);
+                                                }}
+                                            >
+                                                <Pencil className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
+                                            </button>
+                                            <button
+                                                className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
+                                                title="Удалить"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteClick(article.id);
+                                                }}
+                                            >
+                                                <Trash2 className="w-4 h-4 text-muted-foreground hover:text-red-600" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
                     </tbody>
                 </table>
 
-                {/* Footer с пагинацией */}
+                {/* Пагинация */}
                 <div className="flex items-center justify-between p-4 border-t border-border bg-muted/30">
                     <div className="text-xs font-bold text-muted-foreground uppercase">
                         Всего: {data?.total || 0}
@@ -347,19 +348,7 @@ export const ArticleTable = () => {
                 </div>
             </div>
 
-            {/* Модальное окно создания статьи */}
-            <Modal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                title="Добавить статью"
-                className="max-w-3xl"
-            >
-                <div className="max-h-[70vh] overflow-y-auto pr-2">
-                    <CreateArticleForm onSuccess={handleCreateSuccess} />
-                </div>
-            </Modal>
-
-            {/* Модальное окно подтверждения удаления */}
+            {/* Удаление */}
             <Modal
                 isOpen={deleteArticleId !== null}
                 onClose={handleDeleteCancel}
@@ -390,7 +379,7 @@ export const ArticleTable = () => {
                 </div>
             </Modal>
 
-            {/* Модальное окно просмотра статьи */}
+            {/* Просмотр */}
             <Modal
                 isOpen={viewArticleId !== null}
                 onClose={handleViewClose}
@@ -403,7 +392,6 @@ export const ArticleTable = () => {
                     </div>
                 ) : viewArticleData ? (
                     <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-                        {/* Изображение */}
                         <div className="aspect-video rounded-xl overflow-hidden bg-muted">
                             {viewArticleData.image_url ? (
                                 <img
@@ -418,92 +406,47 @@ export const ArticleTable = () => {
                             )}
                         </div>
 
-                        {/* Основная информация */}
                         <div>
                             <h3 className="text-lg font-bold text-foreground mb-1">{viewArticleData.title}</h3>
                             <p className="text-sm text-muted-foreground mb-2">{viewArticleData.description}</p>
                         </div>
 
-                        {/* Детали статьи */}
                         <div className="grid grid-cols-2 gap-3 bg-muted/50 border border-border rounded-xl p-3">
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">ID</p>
-                                <p className="text-xs font-semibold">{viewArticleData.id}</p>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Версия</p>
-                                <p className="text-xs font-semibold">{viewArticleData.version}</p>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Slug</p>
-                                <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{viewArticleData.slug}</code>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Статус</p>
+                            <Stat label="ID" value={viewArticleData.id} />
+                            <Stat label="Версия" value={viewArticleData.version} />
+                            <Stat label="Slug" value={<code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{viewArticleData.slug}</code>} />
+                            <Stat label="Статус" value={
                                 <span className={cn(
-                                    "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
+                                    'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase',
                                     viewArticleData.is_active
-                                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                                        : "bg-muted text-muted-foreground"
+                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                        : 'bg-muted text-muted-foreground'
                                 )}>
                                     {viewArticleData.is_active ? 'Активна' : 'Неактивна'}
                                 </span>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Категория</p>
-                                <p className="text-xs font-semibold">{viewArticleData.category?.title || '—'}</p>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">ID категории</p>
-                                <p className="text-xs font-semibold">{viewArticleData.category?.id || '—'}</p>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Slug категории</p>
-                                <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{viewArticleData.category?.slug || '—'}</code>
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Создана</p>
-                                <p className="text-xs font-semibold">
-                                    {new Date(viewArticleData.created_at).toLocaleDateString('ru-RU', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}
-                                </p>
-                            </div>
-                            {viewArticleData.published_at && (
-                                <div>
-                                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Опубликована</p>
-                                    <p className="text-xs font-semibold">
-                                        {new Date(viewArticleData.published_at).toLocaleDateString('ru-RU', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
-                                    </p>
-                                </div>
-                            )}
+                            } />
+                            <Stat label="Категория" value={viewArticleData.category?.title || '—'} />
+                            <Stat label="Создана" value={new Date(viewArticleData.created_at).toLocaleDateString('ru-RU', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                            })} />
                         </div>
 
-                        {/* Содержимое */}
                         <div>
                             <p className="text-[9px] font-bold text-muted-foreground uppercase mb-2">Содержимое</p>
-                            <div className="prose dark:prose-invert max-w-none">
-                                <p className="text-sm text-foreground whitespace-pre-wrap">{viewArticleData.content}</p>
-                            </div>
+                            <div
+                                className="prose prose-sm dark:prose-invert max-w-none text-sm"
+                                dangerouslySetInnerHTML={{ __html: viewArticleData.content }}
+                            />
                         </div>
 
-                        {/* Кнопки действий */}
-                        <div className="flex gap-3 pt-4">
+                        <div className="flex gap-3 pt-4 border-t border-border">
                             <Button
                                 variant="outline"
                                 onClick={() => {
                                     handleViewClose();
-                                    handleEditClick(viewArticleData.id);
+                                    handleEditNavigate(viewArticleData.id);
                                 }}
                                 className="flex-1"
                             >
@@ -525,27 +468,18 @@ export const ArticleTable = () => {
                     </div>
                 ) : null}
             </Modal>
-
-            {/* Модальное окно редактирования статьи */}
-            <Modal
-                isOpen={editArticleId !== null}
-                onClose={handleEditClose}
-                title="Редактировать статью"
-                className="max-w-3xl"
-            >
-                {isLoadingEditArticle ? (
-                    <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
-                    </div>
-                ) : editArticleData ? (
-                    <EditArticleForm article={editArticleData} articleId={editArticleId!} onSuccess={handleEditSuccess} />
-                ) : null}
-            </Modal>
-
-           
         </div>
     );
 };
+
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
+    return (
+        <div>
+            <p className="text-[9px] font-bold text-muted-foreground uppercase">{label}</p>
+            <div className="text-xs font-semibold mt-0.5">{value}</div>
+        </div>
+    );
+}
 
 const SkeletonRow = () => (
     <tr className="animate-pulse">
@@ -558,18 +492,10 @@ const SkeletonRow = () => (
                 </div>
             </div>
         </td>
-        <td className="p-4">
-            <div className="h-4 w-20 bg-muted rounded" />
-        </td>
-        <td className="p-4">
-            <div className="h-4 w-24 bg-muted rounded" />
-        </td>
-        <td className="p-4">
-            <div className="h-4 w-16 bg-muted rounded" />
-        </td>
-        <td className="p-4">
-            <div className="h-6 w-16 bg-muted rounded-full" />
-        </td>
+        <td className="p-4"><div className="h-4 w-20 bg-muted rounded" /></td>
+        <td className="p-4"><div className="h-4 w-24 bg-muted rounded" /></td>
+        <td className="p-4"><div className="h-4 w-16 bg-muted rounded" /></td>
+        <td className="p-4"><div className="h-6 w-16 bg-muted rounded-full" /></td>
         <td className="p-4">
             <div className="flex gap-1">
                 <div className="w-8 h-8 bg-muted rounded-lg" />
