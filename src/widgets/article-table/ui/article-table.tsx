@@ -14,9 +14,10 @@ import { useArticleById } from '@/entities/article/hooks/use-get-by-id';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 
 import { getCategoryArticlesList } from '@/entities/category-article/api/api';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const ArticleTable = () => {
+    const navigate = useNavigate();
     // Загрузка категорий через useEffect
     const [categories, setCategories] = useState<any[]>([]);
 
@@ -45,16 +46,12 @@ export const ArticleTable = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     // Состояние для модального окна подтверждения удаления
     const [deleteArticleId, setDeleteArticleId] = useState<number | null>(null);
-    // Состояние для модального окна просмотра статьи
-    const [viewArticleId, setViewArticleId] = useState<number | null>(null);
     // Состояние для модального окна редактирования статьи
     const [editArticleId, setEditArticleId] = useState<number | null>(null);
 
     // Хук для удаления статьи
     const { mutate: deleteArticle, isPending: isDeleting } = useDeleteArticle();
 
-    // Хук для получения данных о статье (используется только для просмотра)
-    const { data: viewArticleData, isLoading: isLoadingViewArticle } = useArticleById(viewArticleId);
     // Хук для получения данных о статье (используется только для редактирования)
     const { data: editArticleData, isLoading: isLoadingEditArticle } = useArticleById(editArticleId);
 
@@ -87,14 +84,6 @@ export const ArticleTable = () => {
 
     const handleDeleteCancel = () => {
         setDeleteArticleId(null);
-    };
-
-    const handleViewClick = (id: number) => {
-        setViewArticleId(id);
-    };
-
-    const handleViewClose = () => {
-        setViewArticleId(null);
     };
 
     const handleEditClick = (id: number) => {
@@ -291,7 +280,7 @@ export const ArticleTable = () => {
                                         <button
                                             className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
                                             title="Просмотр статьи"
-                                            onClick={() => handleViewClick(article.id)}
+                                            onClick={() => navigate(`/dashboard/admin/articles/${article.id}/view`)}
                                         >
                                             <Eye className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
                                         </button>
@@ -391,143 +380,6 @@ export const ArticleTable = () => {
                         </Button>
                     </div>
                 </div>
-            </Modal>
-
-            {/* Модальное окно просмотра статьи */}
-            <Modal
-                isOpen={viewArticleId !== null}
-                onClose={handleViewClose}
-                title="Просмотр статьи"
-                className="max-w-2xl"
-            >
-                {isLoadingViewArticle ? (
-                    <div className="flex items-center justify-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]" />
-                    </div>
-                ) : viewArticleData ? (
-                    <div className="space-y-5">
-                        {/* Шапка: картинка + заголовок/статус */}
-                        <div className="flex items-start gap-4">
-                            <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                                {viewArticleData.image_url ? (
-                                    <img
-                                        src={viewArticleData.image_url}
-                                        alt={viewArticleData.title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <FilePlus className="w-8 h-8 text-muted-foreground" />
-                                )}
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="font-bold text-foreground text-xl mb-2">
-                                    {viewArticleData.title}
-                                </h3>
-                                <div className="flex flex-wrap items-center gap-2 mb-2">
-                                    <span className={cn(
-                                        "px-2.5 py-0.5 rounded-full text-xs font-bold uppercase border",
-                                        viewArticleData.is_active
-                                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
-                                            : "bg-muted text-muted-foreground border-border"
-                                    )}>
-                                        {viewArticleData.is_active ? 'Активна' : 'Неактивна'}
-                                    </span>
-                                    <code className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded">
-                                        {viewArticleData.slug}
-                                    </code>
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    Версия: {viewArticleData.version}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Описание */}
-                        <div className="space-y-2">
-                            <h4 className="font-bold text-foreground text-sm uppercase tracking-wider">
-                                Описание
-                            </h4>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                                {viewArticleData.description || 'Описание отсутствует'}
-                            </p>
-                        </div>
-
-                        {/* Содержимое (добавим, как особенность статьи) */}
-                        <div className="space-y-2">
-                            <h4 className="font-bold text-foreground text-sm uppercase tracking-wider">
-                                Содержимое
-                            </h4>
-                            <div className="text-sm text-muted-foreground leading-relaxed bg-muted/20 border border-border rounded-xl p-4">
-                                {viewArticleData.content ? (
-                                    <div className="whitespace-pre-wrap break-words">
-                                        {viewArticleData.content}
-                                    </div>
-                                ) : (
-                                    'Содержимое отсутствует'
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Мета-информация: дата создания, категория, дата публикации */}
-                        <div className="flex flex-wrap gap-4 pt-2 border-t border-border">
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Calendar className="w-3.5 h-3.5" />
-                                <span>Создана: {new Date(viewArticleData.created_at).toLocaleDateString('ru-RU', {
-                                    day: 'numeric',
-                                    month: 'long',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}</span>
-                            </div>
-                            {viewArticleData.published_at && (
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <CalendarCheck className="w-3.5 h-3.5" />
-                                    <span>Опубликована: {new Date(viewArticleData.published_at).toLocaleDateString('ru-RU', {
-                                        day: 'numeric',
-                                        month: 'long',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}</span>
-                                </div>
-                            )}
-                            {viewArticleData.category && (
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <Folder className="w-3.5 h-3.5" />
-                                    <span>Категория: {viewArticleData.category.title}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Кнопки действий (как в категориях: Закрыть + Редактировать) */}
-                        <div className="flex gap-3 pt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={handleViewClose}
-                                className="flex-1"
-                            >
-                                Закрыть
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={() => {
-                                    handleViewClose();
-                                    handleEditClick(viewArticleData.id);
-                                }}
-                                className="flex-1 bg-[var(--red)] hover:bg-red-700"
-                            >
-                                <Pencil className="w-4 h-4 mr-2" />
-                                Редактировать
-                            </Button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="text-center py-12">
-                        <p className="text-muted-foreground">Статья не найдена</p>
-                    </div>
-                )}
             </Modal>
 
             {/* Модальное окно редактирования статьи */}

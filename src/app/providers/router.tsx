@@ -10,6 +10,7 @@ import StaffPage from '@/pages/dasboard/staff/page';
 import CategoryArticlesPage from '@/pages/dasboard/category-articles/page';
 import { SettingsPage } from '@/pages/dasboard/settings/page';
 import ArticlesPage from '@/pages/dasboard/articles/page';
+import ArticleViewPage from '@/pages/dasboard/articles/view/page';
 
 export const AppRouter = () => {
     const { isAuth, isInitialized, initAuth } = useSessionStore();
