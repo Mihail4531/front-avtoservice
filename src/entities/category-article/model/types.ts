@@ -6,6 +6,7 @@ export interface CategoryArticle {
     version: number;
     slug: string;
     description: string;
+    content?: string;
     image_url: string;
     is_active: boolean;
     created_at: string;
@@ -18,6 +19,7 @@ export interface CategoryArticle {
 export interface CreateCategoryArticleRequest {
     title: string;
     description: string;
+    content?: string;
     image_path: string;
 }
 
@@ -30,6 +32,7 @@ export interface UpdateCategoryArticleRequest {
     title: string;
     version: number;
     description: string;
+    content?: string;
     image_path: string;
     is_active?: boolean;
 }

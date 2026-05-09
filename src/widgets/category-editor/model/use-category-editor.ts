@@ -13,6 +13,7 @@ import type { CategoryArticle } from '@/entities/category-article/model/types';
 export const categoryEditorSchema = z.object({
     title: z.string().min(3, 'Минимум 3 символа').max(150, 'Максимум 150'),
     description: z.string().min(3, 'Минимум 3 символа').max(500, 'Максимум 500'),
+    content: z.string().optional(),
     image_path: z.union([z.string().min(1, 'Загрузите обложку'), z.instanceof(File)]),
     is_active: z.boolean(),
     version: z.number().int().optional(), // только для edit
@@ -45,6 +46,7 @@ export const useCategoryEditor = (category?: CategoryArticle | null) => {
         defaultValues: {
             title: category?.title ?? '',
             description: category?.description ?? '',
+            content: category?.content ?? '',
             image_path: category ? extractRelativePath(category.image_url) : '',
             is_active: category?.is_active ?? false,
             version: category?.version,
@@ -57,6 +59,7 @@ export const useCategoryEditor = (category?: CategoryArticle | null) => {
             form.reset({
                 title: category.title,
                 description: category.description,
+                content: category.content ?? '',
                 image_path: extractRelativePath(category.image_url),
                 is_active: category.is_active,
                 version: category.version,
@@ -90,6 +93,7 @@ export const useCategoryEditor = (category?: CategoryArticle | null) => {
                     data: {
                         title: values.title,
                         description: values.description,
+                        content: values.content,
                         image_path: imagePath,
                         is_active: values.is_active,
                         version: values.version!,
@@ -104,6 +108,7 @@ export const useCategoryEditor = (category?: CategoryArticle | null) => {
                 {
                     title: values.title,
                     description: values.description,
+                    content: values.content,
                     image_path: imagePath,
                 },
                 {

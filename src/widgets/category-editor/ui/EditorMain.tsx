@@ -3,6 +3,7 @@
 import { Controller, type UseFormReturn } from 'react-hook-form';
 import { cn } from '@/shared/lib/cn';
 import { FileUpload } from '@/shared/ui/file-upload';
+import { RichTextEditor } from './RichTextEditor';
 import type { CategoryEditorSchema } from '../model/use-category-editor';
 
 interface Props {
@@ -14,10 +15,11 @@ const MAX_TITLE = 150;
 const MAX_DESCRIPTION = 500;
 
 export const EditorMain = ({ form, disabled }: Props) => {
-    const { register, watch, formState: { errors } } = form;
+    const { register, watch, control, formState: { errors } } = form;
 
     const title = watch('title');
     const description = watch('description');
+    const content = watch('content');
 
     return (
         <div className="bg-card border border-border rounded-xl p-6 space-y-6">
@@ -68,6 +70,22 @@ export const EditorMain = ({ form, disabled }: Props) => {
                     )}
                 />
             </Field>
+
+            <Field label="Содержание категории" count={`${countSymbols(content)} симв.`} error={errors.content?.message}>
+                <Controller
+                    name="content"
+                    control={control}
+                    render={({ field }) => (
+                        <RichTextEditor
+                            value={field.value || ''}
+                            onChange={field.onChange}
+                            placeholder="Дополнительное описание категории..."
+                            error={!!errors.content}
+                            disabled={disabled}
+                        />
+                    )}
+                />
+            </Field>
         </div>
     );
 };
@@ -100,4 +118,11 @@ function Field({
             {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
     );
+}
+
+function countSymbols(html: string | undefined): number {
+    if (!html) return 0;
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return (div.textContent || '').length;
 }
