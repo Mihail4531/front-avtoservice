@@ -1,10 +1,8 @@
 'use client';
 
 import {
-    Children,
     createContext,
     forwardRef,
-    isValidElement,
     useContext,
     useEffect,
     useId,
@@ -23,6 +21,8 @@ interface SelectContextValue {
     setOpen: (open: boolean) => void;
     triggerRef: React.RefObject<HTMLButtonElement | null>;
     contentId: string;
+    labels: Map<string, string>;
+    registerLabel: (value: string, label: string) => void;
 }
 
 const SelectContext = createContext<SelectContextValue | null>(null);
@@ -32,9 +32,6 @@ function useSelect() {
     if (!ctx) throw new Error('Select components must be used inside <Select>');
     return ctx;
 }
-
-// Контекст для SelectValue — содержит дерево children из SelectContent
-const SelectChildrenContext = createContext<ReactNode>(null);
 
 interface SelectProps {
     value?: string;
@@ -46,6 +43,8 @@ interface SelectProps {
 export const Select = ({ value, onValueChange, defaultValue, children }: SelectProps) => {
     const [internalValue, setInternalValue] = useState(defaultValue ?? '');
     const [open, setOpen] = useState(false);
+    const [labelsVersion, setLabelsVersion] = useState(0);
+    const labelsRef = useRef<Map<string, string>>(new Map());
     const triggerRef = useRef<HTMLButtonElement | null>(null);
     const contentId = useId();
 
@@ -56,6 +55,12 @@ export const Select = ({ value, onValueChange, defaultValue, children }: SelectP
         if (!isControlled) setInternalValue(next);
         onValueChange?.(next);
         setOpen(false);
+    };
+
+    const registerLabel = (val: string, label: string) => {
+        if (labelsRef.current.get(val) === label) return;
+        labelsRef.current.set(val, label);
+        setLabelsVersion((v) => v + 1);
     };
 
     useEffect(() => {
@@ -90,9 +95,15 @@ export const Select = ({ value, onValueChange, defaultValue, children }: SelectP
                 setOpen,
                 triggerRef,
                 contentId,
+                labels: labelsRef.current,
+                registerLabel,
             }}
         >
-            <div className="relative w-full">{children}</div>
+            <div className="relative w-full">
+                {children}
+                {/* Скрытый рендер children для регистрации labels */}
+                <div className="hidden">{children}</div>
+            </div>
         </SelectContext.Provider>
     );
 };
@@ -143,37 +154,11 @@ interface SelectValueProps {
     className?: string;
 }
 
-// Ищет SelectItem по value среди children и возвращает его label
-function findLabel(children: ReactNode, targetValue: string): ReactNode | null {
-    let found: ReactNode | null = null;
-
-    Children.forEach(children, (child) => {
-        if (found !== null) return;
-        if (!isValidElement(child)) return;
-
-        const props = child.props as { value?: string; children?: ReactNode };
-        if (props.value === targetValue) {
-            found = props.children ?? null;
-            return;
-        }
-
-        // Рекурсивно ищем во вложенных (на случай группировки)
-        if (props.children) {
-            const nested = findLabel(props.children, targetValue);
-            if (nested !== null) found = nested;
-        }
-    });
-
-    return found;
-}
-
 export const SelectValue = ({ placeholder, className }: SelectValueProps) => {
-    const { value } = useSelect();
-    const childrenTree = useContext(SelectChildrenContext);
+    const { value, labels } = useSelect();
+    const label = value ? labels.get(value) : null;
 
-    const label = value ? findLabel(childrenTree, value) : null;
-
-    if (!value || label === null) {
+    if (!value || !label) {
         return (
             <span className={cn('text-muted-foreground font-medium', className)}>
                 {placeholder ?? 'Выберите...'}
@@ -192,24 +177,22 @@ interface SelectContentProps {
 export const SelectContent = ({ className, children }: SelectContentProps) => {
     const { open, contentId } = useSelect();
 
+    if (!open) return null;
+
     return (
-        <SelectChildrenContext.Provider value={children}>
-            {open && (
-                <div
-                    id={contentId}
-                    role="listbox"
-                    className={cn(
-                        'absolute left-0 right-0 top-full z-50 mt-1.5',
-                        'max-h-60 overflow-y-auto',
-                        'rounded-xl border border-border bg-card shadow-lg',
-                        'p-1',
-                        className
-                    )}
-                >
-                    {children}
-                </div>
+        <div
+            id={contentId}
+            role="listbox"
+            className={cn(
+                'absolute left-0 right-0 top-full z-[100] mt-1.5',
+                'max-h-60 overflow-y-auto',
+                'rounded-xl border border-border bg-card shadow-lg',
+                'p-1',
+                className
             )}
-        </SelectChildrenContext.Provider>
+        >
+            {children}
+        </div>
     );
 };
 
@@ -221,8 +204,16 @@ interface SelectItemProps {
 }
 
 export const SelectItem = ({ value, children, className, disabled }: SelectItemProps) => {
-    const { value: selectedValue, onValueChange } = useSelect();
+    const { value: selectedValue, onValueChange, registerLabel } = useSelect();
     const isSelected = selectedValue === value;
+
+    // Регистрируем label один раз при монтировании
+    useEffect(() => {
+        if (typeof children === 'string') {
+            registerLabel(value, children);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value]);
 
     return (
         <button

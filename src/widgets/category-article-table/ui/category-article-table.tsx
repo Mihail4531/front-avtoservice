@@ -37,7 +37,7 @@ export const CategoryArticleTable = () => {
     const [editCategoryId, setEditCategoryId] = useState<number | null>(null);
 
     // Хук для удаления категории
-    const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategoryArticle();
+    const { mutate: deleteCategory, isPending: isDeleting, error: deleteError, reset: resetDelete } = useDeleteCategoryArticle();
 
     // Хук для получения данных о категории (используется только для просмотра)
     const { data: viewCategoryData, isLoading: isLoadingViewCategory } = useCategoryArticleById(viewCategoryId);
@@ -57,9 +57,9 @@ export const CategoryArticleTable = () => {
     };
 
     const handleDeleteClick = (id: number) => {
+        resetDelete();
         setDeleteCategoryId(id);
     };
-
     const handleDeleteConfirm = () => {
         if (deleteCategoryId !== null) {
             deleteCategory(deleteCategoryId, {
@@ -73,8 +73,8 @@ export const CategoryArticleTable = () => {
 
     const handleDeleteCancel = () => {
         setDeleteCategoryId(null);
+        resetDelete();
     };
-
     const handleViewClick = (id: number) => {
         setViewCategoryId(id);
     };
@@ -330,10 +330,27 @@ export const CategoryArticleTable = () => {
                                 Удалить категорию?
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                                Это действие нельзя отменить. Категория будет permanently удалена из системы вместе со всеми связанными данными.
+                                Это действие нельзя отменить. Категория будет удалена из системы.
                             </p>
                         </div>
                     </div>
+
+                    {/* Блок ошибки */}
+                    {deleteError && (
+                        <div className="flex items-start gap-3 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                            <div className="w-1 self-stretch bg-red-500 rounded-full shrink-0" />
+                            <div className="space-y-1">
+                                <p className="text-sm font-bold text-red-700 dark:text-red-400">
+                                    Не удалось удалить
+                                </p>
+                                <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed">
+                                    {(deleteError as any)?.response?.status === 409
+                                        ? 'В этой категории есть статьи. Сначала удалите или перенесите их в другую категорию.'
+                                        : (deleteError as any)?.response?.data?.message || 'Произошла ошибка при удалении'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex gap-3 pt-4">
                         <Button
@@ -343,13 +360,13 @@ export const CategoryArticleTable = () => {
                             disabled={isDeleting}
                             className="flex-1"
                         >
-                            Отмена
+                            {deleteError ? 'Закрыть' : 'Отмена'}
                         </Button>
                         <Button
                             type="button"
                             variant="destructive"
                             onClick={handleDeleteConfirm}
-                            disabled={isDeleting}
+                            disabled={isDeleting || !!deleteError}
                             className="flex-1 bg-[var(--red)] hover:bg-red-700"
                         >
                             {isDeleting ? 'Удаление...' : 'Удалить'}

@@ -5,14 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createArticleSchema, type CreateArticleSchema } from '../model/schema';
 import { useCreateArticle } from '@/entities/article/hooks/use-create';
 import { Button } from '@/shared/ui/button';
-import { Type, FileText } from 'lucide-react';
+import { Type, FileText, AlignLeft, Tag, Link2 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { useState, useEffect } from 'react';
 import { previewSlug, uploadFile } from '@/entities/article/api/api';
 import { FileUpload } from '@/shared/ui/file-upload';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
-import { useQuery } from '@tanstack/react-query';
-import type { CategoryShortResponse } from '@/entities/article/model/types';
 import { getCategoryArticlesList } from '@/entities/category-article/api/api';
 
 interface Props {
@@ -24,10 +22,17 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
     const [previewSlugValue, setPreviewSlugValue] = useState<string>('');
     const [isGeneratingSlug, setIsGeneratingSlug] = useState(false);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [categories, setCategories] = useState<any[]>([]);
 
     const isPending = isCreating || isUploadingImage;
 
-    const { register, handleSubmit, formState: { errors }, watch, control } = useForm<CreateArticleSchema>({
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        watch,
+        control,
+    } = useForm<CreateArticleSchema>({
         resolver: zodResolver(createArticleSchema),
         defaultValues: {
             category_id: 0,
@@ -35,20 +40,17 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
             description: '',
             content: '',
             image_path: undefined,
-          
         },
     });
 
     const title = watch('title');
 
-    // Загрузка категорий для селекта
-    const { data: categoriesData, status } = useQuery({
-        queryKey: ['admin-category-articles-list'],
-        queryFn: () => getCategoryArticlesList({ limit: 1000 }),
-        enabled: true,
-    });
+    useEffect(() => {
+        getCategoryArticlesList({ limit: 100 })
+            .then((data) => setCategories(data?.items || []))
+            .catch((err) => console.error('Failed to load categories:', err));
+    }, []);
 
-    const categories = categoriesData?.items || [];
     useEffect(() => {
         if (!title || title.length < 3) {
             setPreviewSlugValue('');
@@ -72,7 +74,6 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
     const onSubmit = async (data: CreateArticleSchema) => {
         let imagePath: string;
 
-        // Если в image_path лежит File — загружаем на бэк
         if (data.image_path instanceof File) {
             setIsUploadingImage(true);
             try {
@@ -86,7 +87,6 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
             }
             setIsUploadingImage(false);
         } else {
-            // Уже существующий путь (для редактирования)
             imagePath = data.image_path;
         }
 
@@ -97,7 +97,6 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
                 description: data.description,
                 content: data.content,
                 image_path: imagePath,
-               
             },
             {
                 onSuccess: () => onSuccess?.(),
@@ -106,33 +105,33 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="bg-muted/50 border border-border rounded-xl p-4">
-                <p className="text-xs text-muted-foreground font-medium">
-                    <strong>Обратите внимание:</strong> Slug генерируется автоматически на основе названия статьи. Изображение загружается при сохранении формы.
-                </p>
-            </div>
-
-            <div className="space-y-5">
-                {/* Поле Категория - ВЫПАДАЮЩИЙ СПИСОК */}
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
-                        Категория
-                    </label>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            {/* Категория + Название в одной строке */}
+            <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-3">
+                <Field label="Категория" error={errors.category_id?.message}>
                     <Controller
                         name="category_id"
                         control={control}
-                        rules={{ required: 'Выберите категорию', min: { value: 1, message: 'Выберите категорию' } }}
+                        rules={{
+                            required: 'Выберите категорию',
+                            min: { value: 1, message: 'Выберите категорию' },
+                        }}
                         render={({ field }) => (
-                            <Select onValueChange={(val) => field.onChange(Number(val))} value={field.value ? String(field.value) : ''}>
-                                <SelectTrigger className={cn(
-                                    "w-full",
-                                    errors.category_id ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
-                                )}>
-                                    <SelectValue placeholder="Выберите категорию" />
+                            <Select
+                                onValueChange={(val) => field.onChange(Number(val))}
+                                value={field.value ? String(field.value) : ''}
+                            >
+                                <SelectTrigger
+                                    className={cn(
+                                        'h-10 px-3 text-sm',
+                                        errors.category_id && 'border-red-500'
+                                    )}
+                                >
+                                    <Tag className="w-3.5 h-3.5 text-muted-foreground mr-2" />
+                                    <SelectValue placeholder="Выберите" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {categories.map((cat: CategoryShortResponse) => (
+                                    {categories.map((cat) => (
                                         <SelectItem key={cat.id} value={String(cat.id)}>
                                             {cat.title}
                                         </SelectItem>
@@ -141,152 +140,144 @@ export const CreateArticleForm = ({ onSuccess }: Props) => {
                             </Select>
                         )}
                     />
-                    {errors.category_id && (
-                        <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
-                            {errors.category_id.message}
-                        </p>
-                    )}
-                </div>
+                </Field>
 
-                {/* Поле Название */}
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
-                        Название статьи
-                    </label>
+                <Field label="Название статьи" error={errors.title?.message}>
                     <div className="relative">
-                        <Type className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Type className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                         <input
                             {...register('title')}
-                            placeholder="Например: Как заменить масло в двигателе"
+                            placeholder="Как заменить масло в двигателе"
                             disabled={isPending}
                             className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-semibold text-foreground",
-                                errors.title ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
+                                'w-full h-10 pl-9 pr-3 text-sm bg-card border rounded-lg outline-none transition-all font-medium text-foreground',
+                                errors.title
+                                    ? 'border-red-500'
+                                    : 'border-border focus:border-[var(--red)]'
                             )}
                         />
                     </div>
-                    {errors.title && (
-                        <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
-                            {errors.title.message}
-                        </p>
-                    )}
-
-                    {(previewSlugValue || isGeneratingSlug) && (
-                        <div className="mt-2 p-3 bg-gradient-to-r from-muted/30 to-muted/50 border border-border rounded-lg">
-                            <div className="flex items-center gap-2 mb-1.5">
-                                <div className={cn(
-                                    "w-2 h-2 rounded-full",
-                                    isGeneratingSlug ? "bg-yellow-500 animate-pulse" : "bg-green-500"
-                                )} />
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
-                                    {isGeneratingSlug ? "Генерация URL..." : "Автоматически сгенерированный URL"}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-1 bg-card/50 rounded-md p-2 font-mono text-xs border border-border/50 overflow-hidden">
-                                <span className="text-muted-foreground select-none shrink-0">/dashboard/admin/articles/</span>
-                                <span className={cn(
-                                    "font-bold truncate",
-                                    isGeneratingSlug ? "text-muted-foreground" : "text-green-600 dark:text-green-400"
-                                )}>
-                                    {isGeneratingSlug ? 'обработка...' : previewSlugValue}
-                                </span>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Описание */}
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
-                        Описание
-                    </label>
-                    <div className="relative">
-                        <FileText className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                        <textarea
-                            {...register('description')}
-                            placeholder="Краткое описание статьи..."
-                            rows={4}
-                            disabled={isPending}
-                            className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-medium text-foreground resize-y",
-                                errors.description ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
-                            )}
-                        />
-                    </div>
-                    {errors.description && (
-                        <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
-                            {errors.description.message}
-                        </p>
-                    )}
-                </div>
-
-                {/* Содержимое */}
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
-                        Содержимое
-                    </label>
-                    <div className="relative">
-                        <FileText className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                        <textarea
-                            {...register('content')}
-                            placeholder="Полное содержимое статьи..."
-                            rows={8}
-                            disabled={isPending}
-                            className={cn(
-                                "w-full pl-10 pr-4 py-3 bg-card border rounded-xl outline-none transition-all font-medium text-foreground resize-y",
-                                errors.content ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
-                            )}
-                        />
-                    </div>
-                    {errors.content && (
-                        <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
-                            {errors.content.message}
-                        </p>
-                    )}
-                </div>
-
-                {/* Изображение */}
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
-                        Изображение статьи
-                    </label>
-                    <Controller
-                        name="image_path"
-                        control={control}
-                        render={({ field }) => (
-                            <FileUpload
-                                value={field.value}
-                                onChange={field.onChange}
-                                error={!!errors.image_path}
-                                disabled={isPending}
-                            />
-                        )}
-                    />
-                    {errors.image_path && (
-                        <p className="text-red-500 text-[10px] font-bold uppercase ml-1">
-                            {errors.image_path.message as string}
-                        </p>
-                    )}
-                </div>
-
-               
+                </Field>
             </div>
 
+            {/* Slug preview */}
+            {(previewSlugValue || isGeneratingSlug) && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 border border-border rounded-lg">
+                    <Link2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-xs text-muted-foreground font-mono truncate">
+                        /articles/
+                    </span>
+                    <span
+                        className={cn(
+                            'text-xs font-mono font-semibold truncate',
+                            isGeneratingSlug
+                                ? 'text-muted-foreground'
+                                : 'text-green-600 dark:text-green-400'
+                        )}
+                    >
+                        {isGeneratingSlug ? 'генерация...' : previewSlugValue}
+                    </span>
+                </div>
+            )}
+
+            {/* Описание */}
+            <Field label="Описание" error={errors.description?.message}>
+                <div className="relative">
+                    <FileText className="absolute left-3 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
+                    <textarea
+                        {...register('description')}
+                        placeholder="Краткое описание статьи..."
+                        rows={2}
+                        disabled={isPending}
+                        className={cn(
+                            'w-full pl-9 pr-3 py-2 text-sm bg-card border rounded-lg outline-none transition-all font-medium text-foreground resize-none',
+                            errors.description
+                                ? 'border-red-500'
+                                : 'border-border focus:border-[var(--red)]'
+                        )}
+                    />
+                </div>
+            </Field>
+
+            {/* Содержимое */}
+            <Field label="Содержимое" error={errors.content?.message}>
+                <div className="relative">
+                    <AlignLeft className="absolute left-3 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
+                    <textarea
+                        {...register('content')}
+                        placeholder="Полное содержимое статьи..."
+                        rows={6}
+                        disabled={isPending}
+                        className={cn(
+                            'w-full pl-9 pr-3 py-2 text-sm bg-card border rounded-lg outline-none transition-all font-medium text-foreground resize-none',
+                            errors.content
+                                ? 'border-red-500'
+                                : 'border-border focus:border-[var(--red)]'
+                        )}
+                    />
+                </div>
+            </Field>
+
+            {/* Изображение */}
+            <Field label="Изображение" error={errors.image_path?.message as string}>
+                <Controller
+                    name="image_path"
+                    control={control}
+                    render={({ field }) => (
+                        <FileUpload
+                            value={field.value}
+                            onChange={field.onChange}
+                            error={!!errors.image_path}
+                            disabled={isPending}
+                        />
+                    )}
+                />
+            </Field>
+
+            {/* Глобальная ошибка */}
             {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-                    <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                <div className="px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-xs text-red-600 dark:text-red-400 font-medium">
                         {(error as any)?.response?.data?.message || 'Произошла ошибка при создании'}
                     </p>
                 </div>
             )}
 
+            {/* Кнопка submit */}
             <Button
                 type="submit"
                 disabled={isPending}
-                className="w-full bg-[var(--red)] hover:bg-red-600 text-white font-bold py-6 rounded-xl shadow-lg shadow-red-100 transition-all active:scale-[0.98]"
+                className="w-full h-11 mt-2 bg-[var(--red)] hover:bg-red-600 text-white font-semibold rounded-lg transition-all active:scale-[0.98]"
             >
-                {isUploadingImage ? 'Загружаем картинку...' : isCreating ? 'Создание...' : 'Создать статью'}
+                {isUploadingImage
+                    ? 'Загружаем картинку...'
+                    : isCreating
+                        ? 'Создание...'
+                        : 'Создать статью'}
             </Button>
         </form>
     );
 };
+
+// Универсальная обёртка поля с label и ошибкой
+function Field({
+    label,
+    error,
+    children,
+}: {
+    label: string;
+    error?: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                {label}
+            </label>
+            {children}
+            {error && (
+                <p className="text-[11px] text-red-500 font-medium">{error}</p>
+            )}
+        </div>
+    );
+}

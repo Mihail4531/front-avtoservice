@@ -5,39 +5,38 @@ import { Search, FilePlus, ChevronLeft, ChevronRight, Calendar, Pencil, Eye, Tra
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/lib/cn';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '@/shared/ui/modal';
 import { CreateArticleForm } from '@/features/create-article/ui/CreateArticleForm';
 import { useDeleteArticle } from '@/entities/article/hooks/use-delete';
 import { useArticleById } from '@/entities/article/hooks/use-get-by-id';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { useQuery } from '@tanstack/react-query';
-import type { CategoryShortResponse } from '@/entities/article/model/types';
 import { getCategoryArticlesList } from '@/entities/category-article/api/api';
 
 export const ArticleTable = () => {
-    // Загрузка категорий для фильтра
-    const { data: categoriesData } = useQuery({
-        queryKey: ['admin-category-articles-list-filter'],
-        queryFn: () => getCategoryArticlesList({ limit: 1000 }),
-        enabled: true,
-    });
+    // Загрузка категорий через useEffect
+    const [categories, setCategories] = useState<any[]>([]);
 
-    const categories = categoriesData?.items || [];
+    useEffect(() => {
+        getCategoryArticlesList({ limit: 100 })
+            .then((data) => setCategories(data?.items || []))
+            .catch((err) => console.error('Failed to load categories:', err));
+    }, []);
 
-    // Используем лимит 10 по умолчанию
+    // Используем лимит 5 по умолчанию
     const [filters, setFilters] = useState({
         search: '',
         is_active: undefined as boolean | undefined,
         created_at_from: '',
         created_at_to: '',
         category_id: undefined as number | undefined,
-        page: 0
+        page: 0,
     });
 
     const { data, isLoading, refresh } = useArticleList({
         initialLimit: 5,
-        filters
+        filters,
     });
 
     // Состояние для модального окна создания
@@ -148,14 +147,18 @@ export const ArticleTable = () => {
                             <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground z-10" />
                             <Select
                                 value={filters.category_id ? String(filters.category_id) : ''}
-                                onValueChange={(val) => handleFilterChange({ category_id: val ? Number(val) : undefined, page: 0 })}
+                                onValueChange={(val) =>
+                                    handleFilterChange({
+                                        category_id: val ? Number(val) : undefined,
+                                        page: 0,
+                                    })
+                                }
                             >
                                 <SelectTrigger className="pl-8 pr-3 py-1.5 text-xs font-medium text-foreground bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-ring transition-colors w-full min-w-[200px]">
                                     <SelectValue placeholder="Все категории" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Все категории</SelectItem>
-                                    {categories.map((cat: CategoryShortResponse) => (
+                                    {categories.map((cat) => (
                                         <SelectItem key={cat.id} value={String(cat.id)}>
                                             {cat.title}
                                         </SelectItem>
@@ -272,13 +275,6 @@ export const ArticleTable = () => {
                                             onClick={() => handleViewClick(article.id)}
                                         >
                                             <Eye className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
-                                        </button>
-                                        <button
-                                            className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
-                                            title="Редактировать статью"
-                                            onClick={() => handleEditClick(article.id)}
-                                        >
-                                            <Pencil className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
                                         </button>
 
                                         <button
@@ -444,7 +440,7 @@ export const ArticleTable = () => {
                 )}
             </Modal>
 
-           
+
         </div>
     );
 };
