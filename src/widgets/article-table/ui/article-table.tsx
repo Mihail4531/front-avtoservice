@@ -294,7 +294,13 @@ export const ArticleTable = () => {
                                         >
                                             <Eye className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
                                         </button>
-
+                                        <button
+                                            className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
+                                            title="Редактировать статью"
+                                            onClick={() => handleEditClick(article.id)}
+                                        >
+                                            <Pencil className="w-4 h-4 text-muted-foreground hover:text-[var(--red)]" />
+                                        </button>
                                         <button
                                             className="p-2 hover:bg-card rounded-lg border border-transparent hover:border-border transition-all"
                                             title="Удалить статью"
