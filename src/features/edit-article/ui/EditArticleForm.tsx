@@ -70,19 +70,6 @@ export const EditArticleForm = ({ articleId, article, onSuccess }: Props) => {
     const title = watch('title');
     const isActive = watch('is_active');
 
-    // Форматирование даты
-    const formatDate = (dateStr?: string) => {
-        if (!dateStr) return '—';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
     // Регистрация скрытых полей для корректной работы watch/setValue
     useEffect(() => {
         register('is_active');
@@ -157,34 +144,6 @@ export const EditArticleForm = ({ articleId, article, onSuccess }: Props) => {
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto pr-2"
         >
-            {/* Инфо-блок о статье */}
-            <div className="grid grid-cols-2 gap-3 bg-muted/50 border border-border rounded-xl p-3">
-                <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Создана</p>
-                        <p className="text-xs font-semibold">{formatDate(article.created_at)}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Версия</p>
-                        <p className="text-xs font-semibold">{article.version}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 col-span-2">
-                    <Tag className="w-4 h-4 text-muted-foreground" />
-                    <div>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Текущая категория</p>
-                        <p className="text-xs font-semibold">{article.category?.title || '—'}</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Скрытые поля */}
-            <input type="hidden" {...register('version', { valueAsNumber: true })} />
-
             {/* Категория - SELECT */}
             <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">
@@ -365,9 +324,6 @@ export const EditArticleForm = ({ articleId, article, onSuccess }: Props) => {
                     </button>
                 </div>
             </div>
-
-            {/* Популярная статья */}
-            
 
             {error && (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl p-3">

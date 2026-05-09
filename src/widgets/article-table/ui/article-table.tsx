@@ -403,6 +403,7 @@ export const ArticleTable = () => {
                     </div>
                 ) : viewArticleData ? (
                     <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                        {/* Изображение */}
                         <div className="aspect-video rounded-xl overflow-hidden bg-muted">
                             {viewArticleData.image_url ? (
                                 <img
@@ -416,13 +417,87 @@ export const ArticleTable = () => {
                                 </div>
                             )}
                         </div>
+
+                        {/* Основная информация */}
                         <div>
                             <h3 className="text-lg font-bold text-foreground mb-1">{viewArticleData.title}</h3>
                             <p className="text-sm text-muted-foreground mb-2">{viewArticleData.description}</p>
+                        </div>
+
+                        {/* Детали статьи */}
+                        <div className="grid grid-cols-2 gap-3 bg-muted/50 border border-border rounded-xl p-3">
+                            <div>
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase">ID</p>
+                                <p className="text-xs font-semibold">{viewArticleData.id}</p>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Версия</p>
+                                <p className="text-xs font-semibold">{viewArticleData.version}</p>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Slug</p>
+                                <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{viewArticleData.slug}</code>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Статус</p>
+                                <span className={cn(
+                                    "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
+                                    viewArticleData.is_active
+                                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                                        : "bg-muted text-muted-foreground"
+                                )}>
+                                    {viewArticleData.is_active ? 'Активна' : 'Неактивна'}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Категория</p>
+                                <p className="text-xs font-semibold">{viewArticleData.category?.title || '—'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase">ID категории</p>
+                                <p className="text-xs font-semibold">{viewArticleData.category?.id || '—'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Slug категории</p>
+                                <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{viewArticleData.category?.slug || '—'}</code>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Создана</p>
+                                <p className="text-xs font-semibold">
+                                    {new Date(viewArticleData.created_at).toLocaleDateString('ru-RU', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </p>
+                            </div>
+                            {viewArticleData.published_at && (
+                                <div>
+                                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Опубликована</p>
+                                    <p className="text-xs font-semibold">
+                                        {new Date(viewArticleData.published_at).toLocaleDateString('ru-RU', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Содержимое */}
+                        <div>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase mb-2">Содержимое</p>
                             <div className="prose dark:prose-invert max-w-none">
                                 <p className="text-sm text-foreground whitespace-pre-wrap">{viewArticleData.content}</p>
                             </div>
                         </div>
+
+                        {/* Кнопки действий */}
                         <div className="flex gap-3 pt-4">
                             <Button
                                 variant="outline"
