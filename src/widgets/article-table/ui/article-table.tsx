@@ -8,6 +8,7 @@ import { cn } from '@/shared/lib/cn';
 import { useState } from 'react';
 import { Modal } from '@/shared/ui/modal';
 import { CreateArticleForm } from '@/features/create-article/ui/CreateArticleForm';
+import { EditArticleForm } from '@/features/edit-article/ui/EditArticleForm';
 import { useDeleteArticle } from '@/entities/article/hooks/use-delete';
 import { useArticleById } from '@/entities/article/hooks/use-get-by-id';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
@@ -46,12 +47,16 @@ export const ArticleTable = () => {
     const [deleteArticleId, setDeleteArticleId] = useState<number | null>(null);
     // Состояние для модального окна просмотра статьи
     const [viewArticleId, setViewArticleId] = useState<number | null>(null);
+    // Состояние для модального окна редактирования статьи
+    const [editArticleId, setEditArticleId] = useState<number | null>(null);
 
     // Хук для удаления статьи
     const { mutate: deleteArticle, isPending: isDeleting } = useDeleteArticle();
 
     // Хук для получения данных о статье (используется только для просмотра)
     const { data: viewArticleData, isLoading: isLoadingViewArticle } = useArticleById(viewArticleId);
+    // Хук для получения данных о статье (используется только для редактирования)
+    const { data: editArticleData, isLoading: isLoadingEditArticle } = useArticleById(editArticleId);
 
     // Расчет общего количества страниц на основе данных из Go
     const totalPages = data ? Math.ceil(data.total / 5) : 0;
@@ -90,6 +95,19 @@ export const ArticleTable = () => {
 
     const handleViewClose = () => {
         setViewArticleId(null);
+    };
+
+    const handleEditClick = (id: number) => {
+        setEditArticleId(id);
+    };
+
+    const handleEditClose = () => {
+        setEditArticleId(null);
+    };
+
+    const handleEditSuccess = () => {
+        setEditArticleId(null);
+        refresh();
     };
 
     return (
@@ -400,48 +418,53 @@ export const ArticleTable = () => {
                         </div>
                         <div>
                             <h3 className="text-lg font-bold text-foreground mb-1">{viewArticleData.title}</h3>
-                            <p className="text-xs text-muted-foreground font-mono mb-3">
-                                Slug: {viewArticleData.slug}
-                            </p>
-                            <div className="flex items-center gap-2 mb-3">
-                                <Tag className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-sm font-medium text-foreground">
-                                    Категория: {viewArticleData.category?.title || '—'}
-                                </span>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="text-xs font-bold text-muted-foreground uppercase">Описание</div>
-                                <p className="text-sm text-foreground">{viewArticleData.description}</p>
-                            </div>
-                            <div className="space-y-2 mt-4">
-                                <div className="text-xs font-bold text-muted-foreground uppercase">Содержимое</div>
-                                <div className="text-sm text-foreground whitespace-pre-wrap max-h-60 overflow-y-auto">
-                                    {viewArticleData.content}
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
-                                <div className="flex items-center gap-2">
-                                    <div className={cn(
-                                        "w-2 h-2 rounded-full",
-                                        viewArticleData.is_active ? "bg-green-500" : "bg-muted-foreground"
-                                    )} />
-                                    <span className="text-xs font-bold text-muted-foreground uppercase">
-                                        {viewArticleData.is_active ? 'Активна' : 'Неактивна'}
-                                    </span>
-                                </div>
-                                {viewArticleData.published_at && (
-                                    <div className="text-xs text-muted-foreground">
-                                        Опубликовано: {new Date(viewArticleData.published_at).toLocaleDateString('ru-RU')}
-                                    </div>
-                                )}
+                            <p className="text-sm text-muted-foreground mb-2">{viewArticleData.description}</p>
+                            <div className="prose dark:prose-invert max-w-none">
+                                <p className="text-sm text-foreground whitespace-pre-wrap">{viewArticleData.content}</p>
                             </div>
                         </div>
+                        <div className="flex gap-3 pt-4">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    handleViewClose();
+                                    handleEditClick(viewArticleData.id);
+                                }}
+                                className="flex-1"
+                            >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Редактировать
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => {
+                                    handleViewClose();
+                                    handleDeleteClick(viewArticleData.id);
+                                }}
+                                className="flex-1 bg-red-600 hover:bg-red-700"
+                            >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Удалить
+                            </Button>
+                        </div>
                     </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                        Статья не найдена
-                    </p>
-                )}
+                ) : null}
+            </Modal>
+
+            {/* Модальное окно редактирования статьи */}
+            <Modal
+                isOpen={editArticleId !== null}
+                onClose={handleEditClose}
+                title="Редактировать статью"
+                className="max-w-3xl"
+            >
+                {isLoadingEditArticle ? (
+                    <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--red)]"></div>
+                    </div>
+                ) : editArticleData ? (
+                    <EditArticleForm article={editArticleData} articleId={editArticleId!} onSuccess={handleEditSuccess} />
+                ) : null}
             </Modal>
 
            
