@@ -1,5 +1,6 @@
 import { api } from '@/shared/api/api';
-import { type CreateArticleRequest, type SlugPreviewResponse, type UpdateArticleRequest } from '@/entities/article/model/types';
+import { type CreateArticleRequest, type SlugPreviewResponse, type UpdateArticleRequest, type ArticleListResponse, type ArticleFilters } from '@/entities/article/model/types';
+import type { CategoryArticleShort } from '@/entities/article/model/types';
 
 export const createArticle = async (data: CreateArticleRequest) => {
     const response = await api.post('/dashboard/admin/articles', data);
@@ -18,6 +19,20 @@ export const deleteArticle = async (id: number) => {
 
 export const getArticleById = async (id: number) => {
     const response = await api.get(`/dashboard/admin/articles/${id}`);
+    return response.data;
+};
+
+export const getArticlesList = async (filters?: ArticleFilters): Promise<ArticleListResponse> => {
+    const response = await api.get<ArticleListResponse>('/dashboard/admin/articles', {
+        params: filters
+    });
+    return response.data;
+};
+
+export const getCategoriesList = async (): Promise<{ items: CategoryArticleShort[] }> => {
+    const response = await api.get<{ items: CategoryArticleShort[] }>('/dashboard/admin/categories/articles', {
+        params: { limit: 1000 } // Получаем все категории
+    });
     return response.data;
 };
 

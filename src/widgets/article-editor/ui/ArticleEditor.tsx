@@ -20,7 +20,7 @@ export const ArticleEditor = ({ articleId }: Props) => {
     const isEdit = articleId !== undefined;
 
     const { data: article, isLoading } = useArticleById(articleId ?? null);
-    const { form, isPending, error, onSubmit } = useArticleEditor(article);
+    const { form, isPending, error, onSubmit, categories } = useArticleEditor(article);
 
     if (isEdit && isLoading) {
         return (
@@ -102,6 +102,7 @@ export const ArticleEditor = ({ articleId }: Props) => {
                     error={error}
                     onSubmit={onSubmit}
                     showCategorySelect={true}
+                    categories={categories}
                     labels={{
                         publishStatusActive: 'Опубликовано',
                         publishStatusInactive: 'Черновик',
