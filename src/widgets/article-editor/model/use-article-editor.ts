@@ -10,19 +10,35 @@ import { useUpdateArticle } from '@/entities/article/hooks/use-update';
 import { uploadFile } from '@/entities/article/api/api';
 import type { Article } from '@/entities/article/model/types';
 
+/**
+ * Схема валидации для статьи
+ * Соответствует CreateArticleRequest/UpdateArticleRequest и схеме БД:
+ * - category_id: INTEGER NOT NULL REFERENCES categories_articles(id), min=1
+ * - title: VARCHAR(150) NOT NULL CHECK (char_length(btrim(title)) BETWEEN 3 AND 150)
+ * - description: VARCHAR(500) NOT NULL CHECK (char_length(btrim(description)) BETWEEN 3 AND 500)
+ * - content: TEXT NOT NULL CHECK (char_length(btrim(content)) >= 10)
+ * - image_path: VARCHAR(255) NOT NULL CHECK (btrim(image_path) <> '')
+ * - version: BIGINT NOT NULL DEFAULT 1 (только для обновления, не отправляется при создании)
+ */
 export const articleEditorSchema = z.object({
     category_id: z.number().int().min(1, 'Выберите категорию'),
     title: z.string().trim().min(3, 'Минимум 3 символа').max(150, 'Максимум 150 символов'),
     description: z.string().trim().min(3, 'Минимум 3 символа').max(500, 'Максимум 500 символов'),
     content: z.string().trim().min(10, 'Минимум 10 символов'),
-    image_path: z.union([z.string().min(1, 'Загрузите обложку'), z.instanceof(File)]),
+    image_path: z.union([
+        z.string().min(1, 'Загрузите обложку'), 
+        z.instanceof(File)
+    ]),
     is_active: z.boolean(),
-    version: z.number().int().min(1, 'Версия должна быть больше 0').optional(), // только для edit
+    version: z.number().int().min(1, 'Версия должна быть больше 0').optional(), // только для редактирования
 });
 
 export type ArticleEditorSchema = z.infer<typeof articleEditorSchema>;
 
-function extractRelativePath(url: string | undefined): string {
+/**
+ * Утилита для извлечения относительного пути из URL
+ */
+export function extractRelativePath(url: string | undefined): string {
     if (!url) return '';
     if (url.startsWith('http')) {
         const match = url.match(/\/uploads\/(.+)$/);
@@ -53,9 +69,10 @@ export const useArticleEditor = (article?: Article | null) => {
             is_active: article?.is_active ?? false,
             version: article?.version,
         },
+        mode: 'onChange', // Валидация при изменении полей
     });
 
-    // При загрузке статьи — обновляем форму
+    // Синхронизация формы при загрузке данных
     useEffect(() => {
         if (article) {
             form.reset({
@@ -72,8 +89,9 @@ export const useArticleEditor = (article?: Article | null) => {
     }, [article]);
 
     const submit = async (values: ArticleEditorSchema) => {
-        // Загружаем картинку если File
         let imagePath: string;
+
+        // Загружаем картинку если File
         if (values.image_path instanceof File) {
             setIsUploading(true);
             try {
@@ -90,6 +108,7 @@ export const useArticleEditor = (article?: Article | null) => {
         }
 
         if (isEdit && article) {
+            // При обновлении отправляем version
             updateArticle(
                 {
                     id: article.id,
@@ -108,6 +127,7 @@ export const useArticleEditor = (article?: Article | null) => {
                 }
             );
         } else {
+            // При создании НЕ отправляем version (бэкенд сам установит 1)
             createArticle(
                 {
                     category_id: values.category_id,
@@ -123,7 +143,6 @@ export const useArticleEditor = (article?: Article | null) => {
         }
     };
 
-    // Сабмит как черновик (is_active = false)
     const onSubmit = form.handleSubmit((values) => {
         submit(values);
     });
