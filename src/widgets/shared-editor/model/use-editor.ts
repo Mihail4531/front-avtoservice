@@ -6,19 +6,19 @@ import { z } from 'zod';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface UseEditorOptions<T extends z.ZodSchema> {
+interface UseEditorOptions<T extends z.ZodSchema, TEntity extends { id: number; version: number }> {
     schema: T;
-    defaultValues: any;
-    entity?: any | null;
-    onCreate: (data: any) => void;
-    onUpdate: (data: { id: number; data: any }) => void;
+    defaultValues: z.infer<T>;
+    entity?: TEntity | null;
+    onCreate: (data: Omit<z.infer<T>, 'version'>) => void;
+    onUpdate: (params: { id: number; data: z.infer<T> }) => void;
     onUploadFile?: (file: File, folder: string) => Promise<{ path: string }>;
     uploadFolder?: string;
     successPath: string;
     isEdit: boolean;
 }
 
-export function useEditor<T extends z.ZodSchema>({
+export function useEditor<T extends z.ZodSchema, TEntity extends { id: number; version: number }>({
     schema,
     defaultValues,
     entity,
@@ -28,15 +28,16 @@ export function useEditor<T extends z.ZodSchema>({
     uploadFolder = 'uploads',
     successPath,
     isEdit,
-}: UseEditorOptions<T>) {
+}: UseEditorOptions<T, TEntity>) {
     const navigate = useNavigate();
     
     const [isUploading, setIsUploading] = useState(false);
-    const [pendingError, setPendingError] = useState<any>(null);
+    const [pendingError, setPendingError] = useState<Error | null>(null);
 
     const form = useForm<z.infer<T>>({
         resolver: zodResolver(schema),
         defaultValues,
+        mode: 'onChange', // Валидация при изменении полей
     });
 
     // Синхронизация формы при загрузке данных
@@ -71,19 +72,19 @@ export function useEditor<T extends z.ZodSchema>({
             imagePath = values.image_path as string;
         }
 
+        // Формируем данные для отправки
         const dataToSubmit = { ...values, image_path: imagePath };
-        delete dataToSubmit.version; // version не отправляем в API
-
+        
         if (isEdit && entity) {
+            // При обновлении отправляем version (он нужен для оптимистичной блокировки)
             onUpdate({
                 id: entity.id,
-                data: {
-                    ...dataToSubmit,
-                    version: values.version,
-                },
+                data: dataToSubmit as z.infer<T>,
             });
         } else {
-            onCreate(dataToSubmit);
+            // При создании НЕ отправляем version (бэкенд сам установит 1)
+            const { version, ...createData } = dataToSubmit as z.infer<T> & { version?: number };
+            onCreate(createData as Omit<z.infer<T>, 'version'>);
         }
     };
 

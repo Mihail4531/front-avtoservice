@@ -12,16 +12,19 @@ import type { CategoryArticle } from '@/entities/category-article/model/types';
 
 /**
  * Схема валидации для категории статей
- * Соответствует UpdateCategoryArticleRequest и схеме БД:
- * - title: 3-100 символов
- * - description: 3-255 символов
- * - image_path: обязателен
- * - version: >= 1 (для обновления)
+ * Соответствует CreateCategoryArticleRequest/UpdateCategoryArticleRequest и схеме БД:
+ * - title: VARCHAR(100) NOT NULL CHECK (char_length(btrim(title)) BETWEEN 3 AND 100)
+ * - description: VARCHAR(255) NOT NULL CHECK (char_length(btrim(description)) BETWEEN 3 AND 255)
+ * - image_path: VARCHAR(255) NOT NULL CHECK (btrim(image_path) <> '')
+ * - version: BIGINT NOT NULL DEFAULT 1 (только для обновления, не отправляется при создании)
  */
 export const categoryEditorSchema = z.object({
-    title: z.string().min(3, 'Минимум 3 символа').max(100, 'Максимум 100 символов'),
-    description: z.string().min(3, 'Минимум 3 символа').max(255, 'Максимум 255 символов'),
-    image_path: z.union([z.string().min(1, 'Загрузите обложку'), z.instanceof(File)]),
+    title: z.string().trim().min(3, 'Минимум 3 символа').max(100, 'Максимум 100 символов'),
+    description: z.string().trim().min(3, 'Минимум 3 символа').max(255, 'Максимум 255 символов'),
+    image_path: z.union([
+        z.string().min(1, 'Загрузите обложку'), 
+        z.instanceof(File)
+    ]),
     is_active: z.boolean(),
     version: z.number().int().min(1, 'Версия должна быть больше 0').optional(), // только для редактирования
 });
@@ -29,9 +32,9 @@ export const categoryEditorSchema = z.object({
 export type CategoryEditorSchema = z.infer<typeof categoryEditorSchema>;
 
 /**
- * Утилита для извлечения относительного пути из URL (как в статьях)
+ * Утилита для извлечения относительного пути из URL
  */
-function extractRelativePath(url: string | undefined): string {
+export function extractRelativePath(url: string | undefined): string {
     if (!url) return '';
     if (url.startsWith('http')) {
         const match = url.match(/\/uploads\/(.+)$/);
@@ -60,9 +63,10 @@ export const useCategoryEditor = (category?: CategoryArticle | null) => {
             is_active: category?.is_active ?? false,
             version: category?.version,
         },
+        mode: 'onChange', // Валидация при изменении полей
     });
 
-    // Синхронизация формы при загрузке данных (аналогично статьям)
+    // Синхронизация формы при загрузке данных
     useEffect(() => {
         if (category) {
             form.reset({
@@ -83,7 +87,6 @@ export const useCategoryEditor = (category?: CategoryArticle | null) => {
         if (values.image_path instanceof File) {
             setIsUploading(true);
             try {
-                // Путь 'categories/articles' для сохранения структуры папок
                 const response = await uploadFile(values.image_path, 'categories/articles');
                 imagePath = response.path;
             } catch (err) {
@@ -97,6 +100,7 @@ export const useCategoryEditor = (category?: CategoryArticle | null) => {
         }
 
         if (isEdit && category) {
+            // При обновлении отправляем version
             updateCategory(
                 {
                     id: category.id,
@@ -113,12 +117,12 @@ export const useCategoryEditor = (category?: CategoryArticle | null) => {
                 }
             );
         } else {
+            // При создании НЕ отправляем version (бэкенд сам установит 1)
             createCategory(
                 {
                     title: values.title,
                     description: values.description,
                     image_path: imagePath,
-
                 },
                 {
                     onSuccess: () => navigate('/dashboard/admin/categories/articles'),
