@@ -12,12 +12,12 @@ import type { Article } from '@/entities/article/model/types';
 
 export const articleEditorSchema = z.object({
     category_id: z.number().int().min(1, 'Выберите категорию'),
-    title: z.string().min(3, 'Минимум 3 символа').max(150, 'Максимум 150'),
-    description: z.string().min(3, 'Минимум 3 символа').max(500, 'Максимум 500'),
-    content: z.string().min(10, 'Минимум 10 символов'),
+    title: z.string().trim().min(3, 'Минимум 3 символа').max(150, 'Максимум 150 символов'),
+    description: z.string().trim().min(3, 'Минимум 3 символа').max(500, 'Максимум 500 символов'),
+    content: z.string().trim().min(10, 'Минимум 10 символов'),
     image_path: z.union([z.string().min(1, 'Загрузите обложку'), z.instanceof(File)]),
     is_active: z.boolean(),
-    version: z.number().int().optional(), // только для edit
+    version: z.number().int().min(1, 'Версия должна быть больше 0').optional(), // только для edit
 });
 
 export type ArticleEditorSchema = z.infer<typeof articleEditorSchema>;
