@@ -11,14 +11,19 @@ import { uploadFile } from '@/entities/category-article/api/api';
 import type { CategoryArticle } from '@/entities/category-article/model/types';
 
 /**
- * Схема валидации, полностью повторяющая структуру статьи
+ * Схема валидации для категории статей
+ * Соответствует UpdateCategoryArticleRequest и схеме БД:
+ * - title: 3-100 символов
+ * - description: 3-255 символов
+ * - image_path: обязателен
+ * - version: >= 1 (для обновления)
  */
 export const categoryEditorSchema = z.object({
-    title: z.string().min(3, 'Минимум 3 символа').max(150, 'Максимум 150'),
-    description: z.string().min(3, 'Минимум 3 символа').max(500, 'Максимум 500'),
+    title: z.string().min(3, 'Минимум 3 символа').max(100, 'Максимум 100 символов'),
+    description: z.string().min(3, 'Минимум 3 символа').max(255, 'Максимум 255 символов'),
     image_path: z.union([z.string().min(1, 'Загрузите обложку'), z.instanceof(File)]),
     is_active: z.boolean(),
-    version: z.number().int().optional(), // только для редактирования
+    version: z.number().int().min(1, 'Версия должна быть больше 0').optional(), // только для редактирования
 });
 
 export type CategoryEditorSchema = z.infer<typeof categoryEditorSchema>;
