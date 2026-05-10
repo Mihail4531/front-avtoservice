@@ -6,18 +6,43 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { RichTextEditor } from './RichTextEditor';
 import { previewSlug } from '@/entities/article/api/api';
 import { cn } from '@/shared/lib/cn';
-import type { ArticleEditorSchema } from '../model/use-article-editor';
 
-interface Props {
-    form: UseFormReturn<ArticleEditorSchema>;
+interface FieldProps {
+    label: string;
+    required?: boolean;
+    count?: string;
+    hint?: string;
+    error?: string;
+    children: React.ReactNode;
+}
+
+interface EditorMainProps<T extends { title: string; description?: string; content?: string }> {
+    form: UseFormReturn<T>;
     disabled?: boolean;
     initialSlug?: string;
+    showContent?: boolean;
+    showDescriptionRichText?: boolean;
+    labels: {
+        title: string;
+        titlePlaceholder: string;
+        description?: string;
+        descriptionHint?: string;
+        content?: string;
+        slugPrefix: string;
+    };
 }
 
 const MAX_TITLE = 150;
 const MAX_DESCRIPTION = 500;
 
-export const EditorMain = ({ form, disabled, initialSlug }: Props) => {
+export const EditorMain = <T extends { title: string; description?: string; content?: string }>({
+    form,
+    disabled,
+    initialSlug,
+    showContent = true,
+    showDescriptionRichText = false,
+    labels,
+}: EditorMainProps<T>) => {
     const {
         register,
         watch,
@@ -26,13 +51,12 @@ export const EditorMain = ({ form, disabled, initialSlug }: Props) => {
     } = form;
 
     const title = watch('title');
-    const description = watch('description');
-    const content = watch('content');
+    const description = watch('description' as keyof T) as string | undefined;
+    const content = watch('content' as keyof T) as string | undefined;
 
     const [slugPreview, setSlugPreview] = useState(initialSlug ?? '');
     const [isGeneratingSlug, setIsGeneratingSlug] = useState(false);
 
-    // ✅ стабилизированный renderer (ВАЖНО для Tiptap + RHF)
     const renderContent = useCallback(
         ({ field }: any) => (
             <RichTextEditor
@@ -46,7 +70,20 @@ export const EditorMain = ({ form, disabled, initialSlug }: Props) => {
         [disabled, errors.content],
     );
 
-    // slug logic (fixed)
+    const renderDescriptionRichText = useCallback(
+        ({ field }: any) => (
+            <RichTextEditor
+                value={field.value || ''}
+                onChange={field.onChange}
+                placeholder="Описание категории..."
+                error={!!errors.description}
+                disabled={disabled}
+                minHeight="300px"
+            />
+        ),
+        [disabled, errors.description],
+    );
+
     useEffect(() => {
         if (!title || title.length < 3) {
             setSlugPreview(initialSlug ?? '');
@@ -79,17 +116,16 @@ export const EditorMain = ({ form, disabled, initialSlug }: Props) => {
 
     return (
         <div className="bg-card border border-border rounded-xl p-6 space-y-6">
-
             {/* TITLE */}
             <Field
-                label="Заголовок"
+                label={labels.title}
                 required
                 count={`${(title || '').length} / ${MAX_TITLE}`}
-                error={errors.title?.message}
+                error={(errors.title as any)?.message}
             >
                 <input
-                    {...register('title')}
-                    placeholder="Например: Замена ремня ГРМ на VW Polo"
+                    {...register('title' as keyof T)}
+                    placeholder={labels.titlePlaceholder}
                     maxLength={MAX_TITLE}
                     disabled={disabled}
                     className={cn(
@@ -111,7 +147,7 @@ export const EditorMain = ({ form, disabled, initialSlug }: Props) => {
                             )}
                         />
                         <span className="text-xs text-muted-foreground font-mono shrink-0">
-                            /articles/
+                            {labels.slugPrefix}
                         </span>
                         <span className="text-xs font-mono font-semibold truncate text-green-600 dark:text-green-400">
                             {isGeneratingSlug ? 'генерация...' : slugPreview}
@@ -121,61 +157,73 @@ export const EditorMain = ({ form, disabled, initialSlug }: Props) => {
             </Field>
 
             {/* DESCRIPTION */}
-            <Field
-                label="Краткое описание"
-                required
-                count={`${(description || '').length} / ${MAX_DESCRIPTION}`}
-                hint="Используется как мета-описание для SEO"
-                error={errors.description?.message}
-            >
-                <textarea
-                    {...register('description')}
-                    rows={3}
-                    maxLength={MAX_DESCRIPTION}
-                    disabled={disabled}
-                    className={cn(
-                        'w-full px-4 py-3 text-sm bg-card border rounded-xl outline-none resize-none transition-colors',
-                        errors.description
-                            ? 'border-red-500'
-                            : 'border-border focus:border-[var(--red)]',
-                    )}
-                />
-            </Field>
+            {showDescriptionRichText ? (
+                <Field
+                    label={labels.description || 'Описание'}
+                    required
+                    error={(errors.description as any)?.message}
+                    hint={labels.descriptionHint}
+                >
+                    <Controller
+                        name="description" as keyof T
+                        control={control}
+                        render={renderDescriptionRichText}
+                    />
+                </Field>
+            ) : (
+                description !== undefined && (
+                    <Field
+                        label={labels.description || 'Краткое описание'}
+                        required
+                        count={`${(description || '').length} / ${MAX_DESCRIPTION}`}
+                        hint={labels.descriptionHint}
+                        error={(errors.description as any)?.message}
+                    >
+                        <textarea
+                            {...register('description' as keyof T)}
+                            rows={3}
+                            maxLength={MAX_DESCRIPTION}
+                            disabled={disabled}
+                            className={cn(
+                                'w-full px-4 py-3 text-sm bg-card border rounded-xl outline-none resize-none transition-colors',
+                                errors.description
+                                    ? 'border-red-500'
+                                    : 'border-border focus:border-[var(--red)]',
+                            )}
+                        />
+                    </Field>
+                )
+            )}
 
             {/* CONTENT */}
-            <Field
-                label="Содержание"
-                required
-                count={`${contentLength} симв.`}
-                error={errors.content?.message}
-            >
-                <Controller
-                    name="content"
-                    control={control}
-                    render={renderContent}
-                />
-            </Field>
+            {showContent && (
+                <Field
+                    label={labels.content || 'Содержание'}
+                    required
+                    count={`${contentLength} симв.`}
+                    error={(errors.content as any)?.message}
+                >
+                    <Controller
+                        name="content" as keyof T
+                        control={control}
+                        render={renderContent}
+                    />
+                </Field>
+            )}
         </div>
     );
 };
 
 /* ---------------- FIELD ---------------- */
 
-function Field({
+export const Field = ({
     label,
     required,
     count,
     hint,
     error,
     children,
-}: {
-    label: string;
-    required?: boolean;
-    count?: string;
-    hint?: string;
-    error?: string;
-    children: React.ReactNode;
-}) {
+}: FieldProps) => {
     return (
         <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -202,4 +250,4 @@ function Field({
             )}
         </div>
     );
-}
+};

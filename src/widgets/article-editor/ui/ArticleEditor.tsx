@@ -6,9 +6,7 @@ import { ArrowLeft, Edit3, Eye } from 'lucide-react';
 import { useArticleById } from '@/entities/article/hooks/use-get-by-id';
 import { useArticleEditor } from '../model/use-article-editor';
 import { cn } from '@/shared/lib/cn';
-import { EditorMain } from './EditorMain';
-import { EditorSidebar } from './EditorSidebar';
-import { EditorPreview } from './EditorPreview';
+import { EditorMain, EditorSidebar, EditorPreview } from '@/widgets/shared-editor/ui';
 
 interface Props {
     articleId?: number;
@@ -70,9 +68,30 @@ export const ArticleEditor = ({ articleId }: Props) => {
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 p-6">
                 <div>
                     {tab === 'editor' ? (
-                        <EditorMain form={form} disabled={isPending} initialSlug={article?.slug} />
+                        <EditorMain
+                            form={form}
+                            disabled={isPending}
+                            initialSlug={article?.slug}
+                            showContent={true}
+                            showDescriptionRichText={false}
+                            labels={{
+                                title: 'Заголовок',
+                                titlePlaceholder: 'Например: Замена ремня ГРМ на VW Polo',
+                                description: 'Краткое описание',
+                                descriptionHint: 'Используется как мета-описание для SEO',
+                                content: 'Содержание',
+                                slugPrefix: '/articles/',
+                            }}
+                        />
                     ) : (
-                        <EditorPreview form={form} />
+                        <EditorPreview
+                            form={form}
+                            showContent={true}
+                            labels={{
+                                titlePlaceholder: 'Заголовок статьи',
+                                contentPlaceholder: 'Содержание статьи появится здесь...',
+                            }}
+                        />
                     )}
                 </div>
 
@@ -82,6 +101,21 @@ export const ArticleEditor = ({ articleId }: Props) => {
                     isPending={isPending}
                     error={error}
                     onSubmit={onSubmit}
+                    showCategorySelect={true}
+                    labels={{
+                        publishStatusActive: 'Опубликовано',
+                        publishStatusInactive: 'Черновик',
+                        publishStatusActiveDesc: 'Видна посетителям',
+                        publishStatusInactiveDesc: 'Не видна посетителям',
+                        submitButtonCreate: 'Создать черновик',
+                        submitButtonEdit: 'Сохранить',
+                        submitButtonDraft: 'Опубликовать',
+                        cancelButtonText: 'Отмена',
+                        cancelPath: '/dashboard/admin/articles',
+                        categoryTitle: 'Категория',
+                        categoryPlaceholder: '— выберите —',
+                        coverTitle: 'Обложка',
+                    }}
                 />
             </div>
         </div>
