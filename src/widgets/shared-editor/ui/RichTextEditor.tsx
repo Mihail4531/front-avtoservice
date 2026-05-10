@@ -14,6 +14,7 @@ interface Props {
     placeholder?: string;
     error?: boolean;
     disabled?: boolean;
+    minHeight?: string;
 }
 
 export const RichTextEditor = ({
@@ -22,6 +23,7 @@ export const RichTextEditor = ({
     placeholder,
     error,
     disabled,
+    minHeight = '400px',
 }: Props) => {
     const editor = useEditor({
         extensions: [
@@ -42,15 +44,12 @@ export const RichTextEditor = ({
         editorProps: {
             attributes: {
                 class: cn(
-                    'prose prose-sm max-w-none min-h-[400px] px-4 py-3 focus:outline-none',
-
+                    'prose prose-sm max-w-none px-4 py-3 focus:outline-none',
+                    minHeight !== 'auto' && `min-h-[${minHeight}]`,
                     '[&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-foreground [&_h2]:block',
                     '[&_h3]:text-xl [&_h3]:font-bold [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-foreground [&_h3]:block',
-
                     '[&_blockquote]:border-l-4 [&_blockquote]:border-[var(--red)] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-4 [&_blockquote]:text-muted-foreground',
-
                     '[&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5',
-
                     'prose-p:my-2 prose-p:text-foreground',
                     'prose-strong:text-foreground prose-strong:font-bold',
                 ),

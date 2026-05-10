@@ -6,9 +6,7 @@ import { ArrowLeft, Edit3, Eye } from 'lucide-react';
 import { useCategoryArticleById } from '@/entities/category-article/hooks/use-get-by-id';
 import { useCategoryEditor } from '../model/use-category-editor';
 import { cn } from '@/shared/lib/cn';
-import { EditorMain } from './EditorMain';
-import { EditorSidebar } from './EditorSidebar';
-import { EditorPreview } from './EditorPreview';
+import { EditorMain, EditorSidebar, EditorPreview } from '@/widgets/shared-editor/ui';
 
 interface Props {
     categoryId?: number;
@@ -21,10 +19,7 @@ export const CategoryEditor = ({ categoryId }: Props) => {
     const [tab, setTab] = useState<Tab>('editor');
     const isEdit = categoryId !== undefined;
 
-    // Получаем данные категории по ID
     const { data: category, isLoading } = useCategoryArticleById(categoryId ?? null);
-
-    // Используем наш унифицированный хук
     const { form, isPending, error, onSubmit } = useCategoryEditor(category);
 
     if (isEdit && isLoading) {
@@ -37,7 +32,7 @@ export const CategoryEditor = ({ categoryId }: Props) => {
 
     return (
         <div className="flex flex-col min-h-screen bg-background">
-            {/* Header - Полностью идентичен статьям */}
+            {/* Header */}
             <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
                 <div className="flex items-center justify-between px-6 py-3">
                     <div className="flex items-center gap-4">
@@ -49,7 +44,6 @@ export const CategoryEditor = ({ categoryId }: Props) => {
                             К списку
                         </button>
                         <h1 className="text-xl font-bold text-foreground">
-                            {/* Динамический заголовок как в статьях */}
                             {isEdit
                                 ? form.watch('title') || 'Редактирование категории'
                                 : 'Новая категория'}
@@ -74,16 +68,32 @@ export const CategoryEditor = ({ categoryId }: Props) => {
                 </div>
             </div>
 
-            {/* Body - Сетка и компоненты идентичны статьям */}
+            {/* Body */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 p-6">
-                <div className="min-w-0"> {/* min-w-0 предотвращает распирание грида */}
+                <div className="min-w-0">
                     {tab === 'editor' ? (
                         <EditorMain
                             form={form}
                             disabled={isPending}
+                            initialSlug={category?.slug}
+                            showContent={false}
+                            showDescriptionRichText={true}
+                            labels={{
+                                title: 'Название категории',
+                                titlePlaceholder: 'Например: Техническое обслуживание',
+                                description: 'Описание категории',
+                                descriptionHint: 'Введите подробное описание категории с форматированием.',
+                                slugPrefix: '/categories/',
+                            }}
                         />
                     ) : (
-                        <EditorPreview form={form} />
+                        <EditorPreview
+                            form={form}
+                            showContent={false}
+                            labels={{
+                                titlePlaceholder: 'Название категории',
+                            }}
+                        />
                     )}
                 </div>
 
@@ -93,13 +103,24 @@ export const CategoryEditor = ({ categoryId }: Props) => {
                     isPending={isPending}
                     error={error}
                     onSubmit={onSubmit}
+                    showCategorySelect={false}
+                    labels={{
+                        publishStatusActive: 'Опубликовано',
+                        publishStatusInactive: 'Черновик',
+                        publishStatusActiveDesc: 'Видна посетителям',
+                        publishStatusInactiveDesc: 'Не видна посетителям',
+                        submitButtonCreate: 'Создать категорию',
+                        submitButtonEdit: 'Сохранить изменения',
+                        cancelButtonText: 'Отмена',
+                        cancelPath: '/dashboard/admin/categories/articles',
+                        coverTitle: 'Обложка категории',
+                    }}
                 />
             </div>
         </div>
     );
 };
 
-// Вспомогательные компоненты для UI (TabButton и ModeIndicator)
 function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
     return (
         <button

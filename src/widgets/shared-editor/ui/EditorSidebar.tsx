@@ -2,27 +2,55 @@
 
 import { Controller, type UseFormReturn } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { Edit3, Lock } from 'lucide-react'; // Добавил иконку замка для наглядности
+import { Edit3, Lock } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
 import { FileUpload } from '@/shared/ui/file-upload';
-import type { CategoryEditorSchema } from '../model/use-category-editor';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 
-interface Props {
-    form: UseFormReturn<CategoryEditorSchema>;
+interface SidebarCardProps {
+    title: string;
+    required?: boolean;
+    error?: string;
+    children: React.ReactNode;
+}
+
+interface EditorSidebarProps<T extends { is_active?: boolean; image_path: string | File }> {
+    form: UseFormReturn<T>;
     isEdit: boolean;
     isPending: boolean;
     error: any;
     onSubmit: () => void;
+    showCategorySelect?: boolean;
+    categories?: Array<{ id: number; title: string }>;
+    onCategoryChange?: (id: number) => void;
+    labels: {
+        publishStatusActive: string;
+        publishStatusInactive: string;
+        publishStatusActiveDesc: string;
+        publishStatusInactiveDesc: string;
+        submitButtonCreate: string;
+        submitButtonEdit: string;
+        submitButtonDraft?: string;
+        cancelButtonText: string;
+        cancelPath: string;
+        categoryTitle?: string;
+        categoryPlaceholder?: string;
+        coverTitle: string;
+    };
 }
 
-export const EditorSidebar = ({
+export const EditorSidebar = <T extends { is_active?: boolean; image_path: string | File }>({
     form,
     isEdit,
     isPending,
     error,
     onSubmit,
-}: Props) => {
+    showCategorySelect = false,
+    categories,
+    onCategoryChange,
+    labels,
+}: EditorSidebarProps<T>) => {
     const navigate = useNavigate();
     const { control, watch, formState: { errors } } = form;
 
@@ -30,26 +58,25 @@ export const EditorSidebar = ({
 
     return (
         <div className="space-y-4">
-            {/* Блок: Публикация */}
-            <Card title="Публикация">
+            {/* Публикация */}
+            <SidebarCard title={labels.publishStatusActive || 'Публикация'}>
                 <div className="flex items-center justify-between gap-3 mb-4">
                     <div>
                         <p className="text-sm font-bold text-foreground">
-                            {isActive ? 'Опубликовано' : 'Черновик'}
+                            {isActive ? labels.publishStatusActive : labels.publishStatusInactive}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            {isActive ? 'Видна посетителям' : 'Не видна посетителям'}
+                            {isActive ? labels.publishStatusActiveDesc : labels.publishStatusInactiveDesc}
                         </p>
                     </div>
 
-                    {/* Тогл показываем ТОЛЬКО при редактировании */}
                     {isEdit ? (
                         <Controller
-                            name="is_active"
+                            name="is_active" as keyof T
                             control={control}
                             render={({ field }) => (
                                 <Toggle
-                                    checked={field.value}
+                                    checked={field.value as boolean}
                                     onChange={field.onChange}
                                     disabled={isPending}
                                 />
@@ -71,17 +98,17 @@ export const EditorSidebar = ({
                     {isPending
                         ? 'Сохранение...'
                         : isEdit
-                            ? 'Сохранить изменения'
-                            : 'Создать категорию'}
+                            ? labels.submitButtonEdit
+                            : (isActive ? labels.submitButtonDraft : labels.submitButtonCreate)}
                 </Button>
 
                 <Button
                     variant="outline"
-                    onClick={() => navigate('/dashboard/admin/categories/articles')}
+                    onClick={() => navigate(labels.cancelPath)}
                     disabled={isPending}
                     className="w-full"
                 >
-                    × Отмена
+                    × {labels.cancelButtonText}
                 </Button>
 
                 {error && (
@@ -91,12 +118,47 @@ export const EditorSidebar = ({
                         </p>
                     </div>
                 )}
-            </Card>
+            </SidebarCard>
 
-            {/* Блок: Обложка */}
-            <Card title="Обложка категории" required error={errors.image_path?.message as string}>
+            {/* Категория */}
+            {showCategorySelect && categories && (
+                <SidebarCard 
+                    title={labels.categoryTitle || 'Категория'} 
+                    required 
+                    error={(errors.category_id as any)?.message}
+                >
+                    <Controller
+                        name="category_id" as keyof T
+                        control={control}
+                        render={({ field }) => (
+                            <Select
+                                onValueChange={(val) => {
+                                    const numId = Number(val);
+                                    field.onChange(numId);
+                                    onCategoryChange?.(numId);
+                                }}
+                                value={field.value ? String(field.value) : ''}
+                            >
+                                <SelectTrigger className={cn('w-full', errors.category_id && 'border-red-500')}>
+                                    <SelectValue placeholder={labels.categoryPlaceholder || '— выберите —'} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.map((cat) => (
+                                        <SelectItem key={cat.id} value={String(cat.id)}>
+                                            {cat.title}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    />
+                </SidebarCard>
+            )}
+
+            {/* Обложка */}
+            <SidebarCard title={labels.coverTitle} required error={(errors.image_path as any)?.message}>
                 <Controller
-                    name="image_path"
+                    name="image_path" as keyof T
                     control={control}
                     render={({ field }) => (
                         <FileUpload
@@ -107,13 +169,17 @@ export const EditorSidebar = ({
                         />
                     )}
                 />
-            </Card>
+            </SidebarCard>
         </div>
     );
 };
 
-// Вспомогательные компоненты без изменений
-function Card({ title, required, error, children }: any) {
+export const SidebarCard = ({
+    title,
+    required,
+    error,
+    children,
+}: SidebarCardProps) => {
     return (
         <div className="bg-card border border-border rounded-xl p-4">
             <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
@@ -123,9 +189,9 @@ function Card({ title, required, error, children }: any) {
             {error && <p className="text-xs text-red-500 font-medium mt-2">{error}</p>}
         </div>
     );
-}
+};
 
-function Toggle({ checked, onChange, disabled }: any) {
+function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
     return (
         <button
             type="button"
