@@ -21,7 +21,10 @@ export const CategoryEditor = ({ categoryId }: Props) => {
     const [tab, setTab] = useState<Tab>('editor');
     const isEdit = categoryId !== undefined;
 
+    // Получаем данные категории по ID
     const { data: category, isLoading } = useCategoryArticleById(categoryId ?? null);
+
+    // Используем наш унифицированный хук
     const { form, isPending, error, onSubmit } = useCategoryEditor(category);
 
     if (isEdit && isLoading) {
@@ -34,7 +37,7 @@ export const CategoryEditor = ({ categoryId }: Props) => {
 
     return (
         <div className="flex flex-col min-h-screen bg-background">
-            {/* Header */}
+            {/* Header - Полностью идентичен статьям */}
             <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
                 <div className="flex items-center justify-between px-6 py-3">
                     <div className="flex items-center gap-4">
@@ -46,7 +49,10 @@ export const CategoryEditor = ({ categoryId }: Props) => {
                             К списку
                         </button>
                         <h1 className="text-xl font-bold text-foreground">
-                            {isEdit ? form.watch('title') || 'Редактирование' : 'Новая категория'}
+                            {/* Динамический заголовок как в статьях */}
+                            {isEdit
+                                ? form.watch('title') || 'Редактирование категории'
+                                : 'Новая категория'}
                         </h1>
                     </div>
 
@@ -68,11 +74,14 @@ export const CategoryEditor = ({ categoryId }: Props) => {
                 </div>
             </div>
 
-            {/* Body */}
+            {/* Body - Сетка и компоненты идентичны статьям */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 p-6">
-                <div>
+                <div className="min-w-0"> {/* min-w-0 предотвращает распирание грида */}
                     {tab === 'editor' ? (
-                        <EditorMain form={form} disabled={isPending} />
+                        <EditorMain
+                            form={form}
+                            disabled={isPending}
+                        />
                     ) : (
                         <EditorPreview form={form} />
                     )}
@@ -90,6 +99,7 @@ export const CategoryEditor = ({ categoryId }: Props) => {
     );
 };
 
+// Вспомогательные компоненты для UI (TabButton и ModeIndicator)
 function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
     return (
         <button

@@ -7,7 +7,7 @@ import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/lib/cn';
 import { useState } from 'react';
 import { Modal } from '@/shared/ui/modal';
-import { CreateCategoryArticleForm } from '@/features/create-category-article/ui/CreateCategoryArticleForm';
+
 import { EditCategoryArticleForm } from '@/features/edit-category-article/ui/EditCategoryArticleForm';
 import { useDeleteCategoryArticle } from '@/entities/category-article/hooks/use-delete';
 import { useCategoryArticleById } from '@/entities/category-article/hooks/use-get-by-id';
@@ -48,11 +48,7 @@ export const CategoryArticleTable = () => {
     // Расчет общего количества страниц на основе данных из Go
     const totalPages = data ? Math.ceil(data.total / 5) : 0;
 
-    const handleCreateSuccess = () => {
-        setIsCreateModalOpen(false);
-        refresh(); // Обновляем список после создания
-    };
-
+  
     const handleFilterChange = (newFilters: Partial<typeof filters>) => {
         setFilters(prev => ({ ...prev, ...newFilters, page: newFilters.page !== undefined ? newFilters.page : prev.page }));
     };
@@ -117,7 +113,7 @@ export const CategoryArticleTable = () => {
 
                         <Button
                             className="gap-2 font-bold bg-[var(--red)] hover:bg-red-700 w-full md:w-auto"
-                            onClick={() => setIsCreateModalOpen(true)}
+                            onClick={() => navigate('/dashboard/admin/categories/articles/new')}
                         >
                             <FilePlus className="w-4 h-4" />
                             Добавить
@@ -304,17 +300,7 @@ export const CategoryArticleTable = () => {
                 </div>
             </div>
 
-            {/* Модальное окно создания категории */}
-            <Modal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                title="Создать категорию статей"
-                className="max-w-xl"
-            >
-                <CreateCategoryArticleForm onSuccess={handleCreateSuccess} />
-            </Modal>
-
-            {/* Модальное окно подтверждения удаления */}
+           
             <Modal
                 isOpen={deleteCategoryId !== null}
                 onClose={handleDeleteCancel}

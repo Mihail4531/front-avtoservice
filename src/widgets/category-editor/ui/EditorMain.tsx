@@ -1,29 +1,79 @@
 'use client';
 
 import { Controller, type UseFormReturn } from 'react-hook-form';
+import { useEffect, useState, useCallback } from 'react';
 import { cn } from '@/shared/lib/cn';
-import { FileUpload } from '@/shared/ui/file-upload';
+import { previewSlug } from '@/entities/article/api/api';
 import { RichTextEditor } from './RichTextEditor';
 import type { CategoryEditorSchema } from '../model/use-category-editor';
 
 interface Props {
     form: UseFormReturn<CategoryEditorSchema>;
     disabled?: boolean;
+    initialSlug?: string;
 }
 
 const MAX_TITLE = 150;
-const MAX_DESCRIPTION = 500;
 
-export const EditorMain = ({ form, disabled }: Props) => {
-    const { register, watch, control, formState: { errors } } = form;
+export const EditorMain = ({ form, disabled, initialSlug }: Props) => {
+    const {
+        register,
+        watch,
+        control,
+        formState: { errors },
+    } = form;
 
     const title = watch('title');
-    const description = watch('description');
-    const content = watch('content');
+
+    const [slugPreview, setSlugPreview] = useState(initialSlug ?? '');
+    const [isGeneratingSlug, setIsGeneratingSlug] = useState(false);
+
+    // ✅ стабилизируем render editor (важно для Controller + Tiptap)
+    const renderDescription = useCallback(
+        ({ field }: any) => (
+            <RichTextEditor
+                content={field.value || ''}
+                onChange={field.onChange}
+                disabled={disabled}
+                error={!!errors.description}
+            />
+        ),
+        [disabled, errors.description],
+    );
+
+    // slug generator
+    useEffect(() => {
+        if (!title || title.length < 3) {
+            setSlugPreview('');
+            return;
+        }
+
+        setIsGeneratingSlug(true);
+
+        const timeoutId = setTimeout(async () => {
+            try {
+                const response = await previewSlug(title);
+                setSlugPreview(response.slug);
+            } catch (err) {
+                console.error('Ошибка генерации:', err);
+            } finally {
+                setIsGeneratingSlug(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [title]);
 
     return (
-        <div className="bg-card border border-border rounded-xl p-6 space-y-6">
-            <Field label="Название категории" required count={`${(title || '').length} / ${MAX_TITLE}`} error={errors.title?.message}>
+        <div className="bg-card border border-border rounded-xl p-6 space-y-8">
+
+            {/* TITLE */}
+            <Field
+                label="Название категории"
+                required
+                count={`${(title || '').length} / ${MAX_TITLE}`}
+                error={errors.title?.message}
+            >
                 <input
                     {...register('title')}
                     placeholder="Например: Техническое обслуживание"
@@ -31,98 +81,76 @@ export const EditorMain = ({ form, disabled }: Props) => {
                     disabled={disabled}
                     className={cn(
                         'w-full px-4 py-3 text-lg font-semibold bg-card border rounded-xl outline-none transition-colors',
-                        errors.title ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
+                        errors.title
+                            ? 'border-red-500'
+                            : 'border-border focus:border-[var(--red)]',
                     )}
                 />
+
+                {(slugPreview || isGeneratingSlug) && (
+                    <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-muted/30 border border-border rounded-lg">
+                        <div
+                            className={cn(
+                                'w-2 h-2 rounded-full shrink-0',
+                                isGeneratingSlug
+                                    ? 'bg-yellow-500 animate-pulse'
+                                    : 'bg-green-500',
+                            )}
+                        />
+
+                        <span className="text-xs text-muted-foreground font-mono">
+                            /categories/
+                        </span>
+
+                        <span className="text-xs font-mono font-semibold truncate text-green-600 dark:text-green-400">
+                            {isGeneratingSlug ? 'генерация...' : slugPreview}
+                        </span>
+                    </div>
+                )}
             </Field>
 
+            {/* DESCRIPTION */}
             <Field
-                label="Описание"
+                label="Описание категории"
                 required
-                count={`${(description || '').length} / ${MAX_DESCRIPTION}`}
-                hint="Краткое описание категории для отображения в списке."
                 error={errors.description?.message}
+                hint="Введите подробное описание категории с форматированием."
             >
-                <textarea
-                    {...register('description')}
-                    placeholder="Краткое описание категории..."
-                    rows={4}
-                    maxLength={MAX_DESCRIPTION}
-                    disabled={disabled}
-                    className={cn(
-                        'w-full px-4 py-3 text-sm bg-card border rounded-xl outline-none transition-colors resize-none',
-                        errors.description ? 'border-red-500' : 'border-border focus:border-[var(--red)]'
-                    )}
-                />
-            </Field>
-
-            <Field label="Изображение категории" required error={errors.image_path?.message as string}>
                 <Controller
-                    name="image_path"
-                    control={form.control}
-                    render={({ field }) => (
-                        <FileUpload
-                            value={field.value}
-                            onChange={field.onChange}
-                            error={!!errors.image_path}
-                            disabled={disabled}
-                        />
-                    )}
-                />
-            </Field>
-
-            <Field label="Содержание категории" count={`${countSymbols(content)} симв.`} error={errors.content?.message}>
-                <Controller
-                    name="content"
+                    name="description"
                     control={control}
-                    render={({ field }) => (
-                        <RichTextEditor
-                            value={field.value || ''}
-                            onChange={field.onChange}
-                            placeholder="Дополнительное описание категории..."
-                            error={!!errors.content}
-                            disabled={disabled}
-                        />
-                    )}
+                    render={renderDescription}
                 />
             </Field>
         </div>
     );
 };
 
-function Field({
-    label,
-    required,
-    count,
-    hint,
-    error,
-    children,
-}: {
-    label: string;
-    required?: boolean;
-    count?: string;
-    hint?: string;
-    error?: string;
-    children: React.ReactNode;
-}) {
+function Field({ label, required, count, hint, error, children }: any) {
     return (
         <div className="space-y-2">
             <div className="flex items-center justify-between">
                 <label className="text-sm font-bold text-foreground">
-                    {label} {required && <span className="text-[var(--red)]">*</span>}
+                    {label}{' '}
+                    {required && <span className="text-[var(--red)]">*</span>}
                 </label>
-                {count && <span className="text-xs text-muted-foreground font-medium">{count}</span>}
+
+                {count && (
+                    <span className="text-xs text-muted-foreground font-medium">
+                        {count}
+                    </span>
+                )}
             </div>
+
             {children}
-            {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
-            {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
+
+            {error && (
+                <p className="text-xs text-red-500 font-medium">{error}</p>
+            )}
+
+            {hint && !error && (
+                <p className="text-xs text-muted-foreground">{hint}</p>
+            )}
         </div>
     );
-}
-
-function countSymbols(html: string | undefined): number {
-    if (!html) return 0;
-    const div = document.createElement('div');
-    div.innerHTML = html;
-    return (div.textContent || '').length;
 }

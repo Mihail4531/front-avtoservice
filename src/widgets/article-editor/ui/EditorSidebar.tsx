@@ -158,25 +158,20 @@ function Card({
     );
 }
 
-function Toggle({
-    checked,
-    onChange,
-}: {
-    checked: boolean;
-    onChange: (v: boolean) => void;
-}) {
+function Toggle({ checked, onChange, disabled }: any) {
     return (
         <button
             type="button"
-            onClick={() => onChange(!checked)}
+            onClick={() => !disabled && onChange(!checked)}
             className={cn(
-                'relative w-11 h-6 rounded-full transition-colors',
-                checked ? 'bg-[var(--red)]' : 'bg-muted'
+                'relative w-11 h-6 rounded-full transition-all duration-200',
+                disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+                checked ? 'bg-[var(--red)]' : 'bg-gray-300 dark:bg-gray-600'
             )}
         >
             <div
                 className={cn(
-                    'absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform',
+                    'absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-sm',
                     checked ? 'left-[22px]' : 'left-0.5'
                 )}
             />

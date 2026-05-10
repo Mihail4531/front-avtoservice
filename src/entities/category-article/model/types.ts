@@ -19,7 +19,7 @@ export interface CategoryArticle {
 export interface CreateCategoryArticleRequest {
     title: string;
     description: string;
-    content?: string;
+  
     image_path: string;
 }
 
@@ -32,7 +32,6 @@ export interface UpdateCategoryArticleRequest {
     title: string;
     version: number;
     description: string;
-    content?: string;
     image_path: string;
     is_active?: boolean;
 }
@@ -55,8 +54,8 @@ export interface SlugPreviewResponse {
 export interface CategoryArticleFilters {
     search?: string;
     is_active?: boolean;
-    created_at_from?: string; // ISO 8601 format for backend *time.Time
-    created_at_to?: string;   // ISO 8601 format for backend *time.Time
+    created_at_from?: string; 
+    created_at_to?: string;   
     page?: number;
     limit?: number;
 }

@@ -10,71 +10,56 @@ interface Props {
 export const EditorPreview = ({ form }: Props) => {
     const title = form.watch('title');
     const description = form.watch('description');
-    const image_path = form.watch('image_path');
-    const is_active = form.watch('is_active');
+    const imagePath = form.watch('image_path');
 
-    // Преобразуем File в URL для предпросмотра
-    const imageUrl = typeof image_path === 'string' && image_path
-        ? `https://autoleader.by/uploads/${image_path}`
-        : image_path instanceof File
-            ? URL.createObjectURL(image_path)
-            : '';
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+    const imageUrl =
+        imagePath instanceof File
+            ? URL.createObjectURL(imagePath)
+            : typeof imagePath === 'string' && imagePath
+                ? imagePath.startsWith('http')
+                    ? imagePath
+                    : `${apiUrl}/uploads/${imagePath}`
+                : null;
 
     return (
-        <div className="bg-card border border-border rounded-xl p-6 space-y-6">
-            <h2 className="text-lg font-bold text-foreground mb-4">Предпросмотр категории</h2>
+        <article className="bg-card border border-border rounded-xl p-8 max-w-3xl mx-auto">
+            {imageUrl && (
+                <img
+                    src={imageUrl}
+                    alt={title || 'preview'}
+                    className="w-full aspect-video object-cover rounded-xl mb-6"
+                />
+            )}
 
-            {/* Карточка превью */}
-            <div className="border border-border rounded-xl overflow-hidden">
-                {/* Изображение */}
-                {imageUrl ? (
-                    <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
-                        <img
-                            src={imageUrl}
-                            alt={title || 'Превью'}
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
-                ) : (
-                    <div className="aspect-video bg-muted flex items-center justify-center">
-                        <span className="text-muted-foreground text-sm">Нет изображения</span>
-                    </div>
-                )}
+            <h1 className="text-3xl font-bold text-foreground mb-4">
+                {title || 'Название категории'}
+            </h1>
 
-                {/* Контент */}
-                <div className="p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                        <span className={cn(
-                            "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border",
-                            is_active
-                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
-                                : "bg-muted text-muted-foreground border-border"
-                        )}>
-                            {is_active ? 'Активна' : 'Неактивна'}
-                        </span>
-                    </div>
+            {description && (
+                <div
+                    className="text-lg text-muted-foreground mb-8 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: description }}
+                />
+            )}
 
-                    <h3 className="text-xl font-bold text-foreground">
-                        {title || 'Название категории'}
-                    </h3>
-
-                    <p className="text-sm text-muted-foreground line-clamp-3">
-                        {description || 'Описание категории...'}
-                    </p>
-                </div>
-            </div>
-
-            {/* Подсказка */}
-            <div className="bg-muted/50 border border-border rounded-xl p-4">
-                <p className="text-xs text-muted-foreground font-medium">
-                    <strong>Обратите внимание:</strong> Это предварительный просмотр. 
-                    Фактическое отображение может незначительно отличаться в зависимости от темы и устройства.
+            <div
+                className={`prose prose-sm max-w-none
+                    prose-headings:font-bold prose-headings:text-foreground
+                    prose-h2:text-xl prose-h2:mt-6 prose-h2:mb-3
+                    prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2
+                    prose-p:my-2 prose-p:text-foreground
+                    prose-strong:text-foreground
+                    prose-blockquote:border-l-4 prose-blockquote:border-[var(--red)]
+                    prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground
+                    prose-a:text-[var(--red)] prose-a:underline`}
+            >
+                <p className="text-muted-foreground">
+                    Здесь будет отображаться список всех услуг и статей,
+                    привязанных к данной категории.
                 </p>
             </div>
-        </div>
+        </article>
     );
 };
-
-function cn(...classes: (string | boolean | undefined | null)[]) {
-    return classes.filter(Boolean).join(' ');
-}

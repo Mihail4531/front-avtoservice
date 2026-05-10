@@ -45,9 +45,7 @@ export const ArticleEditor = ({ articleId }: Props) => {
                             <ArrowLeft className="w-4 h-4" />
                             К списку
                         </button>
-                        <h1 className="text-xl font-bold text-foreground">
-                            {isEdit ? form.watch('title') || 'Редактирование' : 'Новая статья'}
-                        </h1>
+                    
                     </div>
 
                     <div className="flex bg-muted/50 p-1 rounded-lg border border-border">
@@ -72,7 +70,7 @@ export const ArticleEditor = ({ articleId }: Props) => {
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 p-6">
                 <div>
                     {tab === 'editor' ? (
-                        <EditorMain form={form} disabled={isPending} />
+                        <EditorMain form={form} disabled={isPending} initialSlug={article?.slug} />
                     ) : (
                         <EditorPreview form={form} />
                     )}
