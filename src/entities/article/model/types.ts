@@ -6,6 +6,14 @@ export interface CategoryShortResponse {
     slug: string;
 }
 
+/**
+ * Краткая информация о категории для использования в селекте
+ */
+export interface CategoryArticleShort {
+    id: number;
+    title: string;
+}
+
 export interface Article {
     id: number;
     version: number;

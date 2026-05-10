@@ -9,6 +9,7 @@ import { useCreateArticle } from '@/entities/article/hooks/use-create';
 import { useUpdateArticle } from '@/entities/article/hooks/use-update';
 import { uploadFile } from '@/entities/article/api/api';
 import type { Article } from '@/entities/article/model/types';
+import { useCategoriesList } from '@/entities/article/hooks/use-categories-list';
 
 /**
  * Схема валидации для статьи
@@ -53,9 +54,10 @@ export const useArticleEditor = (article?: Article | null) => {
 
     const { mutate: createArticle, isPending: isCreating, error: createError } = useCreateArticle();
     const { mutate: updateArticle, isPending: isUpdating, error: updateError } = useUpdateArticle();
+    const { categories, isLoading: isCategoriesLoading } = useCategoriesList();
     const [isUploading, setIsUploading] = useState(false);
 
-    const isPending = isCreating || isUpdating || isUploading;
+    const isPending = isCreating || isUpdating || isUploading || isCategoriesLoading;
     const error = createError || updateError;
 
     const form = useForm<ArticleEditorSchema>({
@@ -153,5 +155,6 @@ export const useArticleEditor = (article?: Article | null) => {
         isPending,
         error,
         onSubmit,
+        categories,
     };
 };
